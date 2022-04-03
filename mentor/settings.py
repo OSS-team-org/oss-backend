@@ -33,7 +33,7 @@ class ProdConfig(Config):
 
     ENV = 'prod'
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:biologyc4@localhost/mentor'
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URI")
     # os.environ.get("PRODUCTION_DATABASE_URL")
 
 
