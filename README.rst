@@ -10,11 +10,12 @@ cd oss-backend
 pip install -r requirements.txt
 
 
-Secondly, set your app's secret key as an environment variable. For example, add the following to .bashrc or .bash_profile.
+Secondly, set your app's secret key as an environment variable. For example, 
+add the following to ``.bashrc`` or ``.bash_profile``.
 
 .. code-block:: bash
 
-export TULIX_SECRET='something-really-secret'
+        export TULIX_SECRET='something-really-secret'
 
 Before running shell commands, set the ``FLASK_APP`` and ``FLASK_DEBUG`` 
 environment variables ::
@@ -26,12 +27,12 @@ environment variables ::
 Run the following commands to create your app's 
 database tables and perform the initial migration ::
 
-flask db init
-flask db migrate
-flask db upgrade
+        flask db init
+        flask db migrate
+        flask db upgrade
 
 To run the web application use::
-flask run --with-threads
+        flask run --with-threads
 
 
 
