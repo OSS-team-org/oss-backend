@@ -16,13 +16,15 @@ Secondly, set your app's secret key as an environment variable. For example, add
 
 export TULIX_SECRET='something-really-secret'
 
-Before running shell commands, set the ``FLASK_APP`` and ``FLASK_DEBUG`` environment variables ::
+Before running shell commands, set the ``FLASK_APP`` and ``FLASK_DEBUG`` 
+environment variables ::
 
-export FLASK_APP=/path/to/autoapp.py
-export FLASK_DEBUG=1 
+        export FLASK_APP=/path/to/autoapp.py
+        export FLASK_DEBUG=1 
 
 
-Run the following commands to create your app's database tables and perform the initial migration ::
+Run the following commands to create your app's 
+database tables and perform the initial migration ::
 
 flask db init
 flask db migrate
