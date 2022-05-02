@@ -101,6 +101,19 @@ def signup(email):
 
 
 
+#complete verify email is code is correct
+@blueprint.route('/api/account/verify', methods=['POST'])
+@use_kwargs({'code': fields.Str()})
+def verify_email(code):
+    account = Account.query.filter(Account.code == code).first()
+    if account:
+        account.kyc_level = "KYC_LEVEL_1"
+        account.save()
+        return jsonify({"message": "Account verified successfully"})
+    else:
+        return jsonify({"error": "Account not found"})
+
+
 
 
 #Create roles
