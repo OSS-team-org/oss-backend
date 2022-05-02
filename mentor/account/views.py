@@ -2,6 +2,7 @@
 """User views."""
 import logging
 import json
+import random
 #push
 # from firebase_admin import auth
 from flask import Blueprint, request, Response, jsonify
@@ -10,8 +11,9 @@ from marshmallow import fields
 from sqlalchemy import or_
 import datetime
 import jwt
-from .models import Account
-from .serializers import account_schema, account_schemas
+from .models import Account, Role, UserRoles
+
+from .serializers import account_schema, account_schemas, role_schema, role_schemas
 # from ..firebase import pb
 from mentor.middleware import check_token
 # from ..utils import get_account_verification_stage, send_mail
@@ -80,18 +82,49 @@ def update_account(**kwargs):
 
 # For Development purposes. Api route to sign up a new user
 @blueprint.route('/api/account/signup', methods=['POST'])
-@use_kwargs({'email': fields.Str(), 'password': fields.Str()})
-def signup(email, password):
+@use_kwargs({'email': fields.Str()})
+def signup(email):
     
     try:
-        #create user
-        user = Account.create(email=email, password=password)
-        # logging.info('Request: Email: {} \n\n Response: {}'.format(user.email, user.__dict__))
-        return Response(json.dumps({'message': user.email}), status=201, mimetype='application/json')
+        #if account doesin't exist, create account with 4 digit unique code
+        account = Account.query.filter(Account.email == email).first()
+        if not account:
+            account = Account(email=email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_0", registered_through="Internal")
+            account.save()
+            return jsonify({"message": "{} created successfully".format(account.email), "status_code": 201})
+        else:
+            print("Account already exists")
+            return jsonify({"error": "Account already exists"})
+        
     except Exception as e:
-        return {'message': e}, 400
+        return jsonify({"message": str(e)})
 
 
+
+
+
+#Create roles
+@blueprint.route('/api/role', methods=['POST'])
+@marshal_with(role_schema)
+@use_kwargs({'name': fields.Str()})
+def create_role(name):
+    try:
+        role = Role.create(name=name)
+        return Response(json.dumps({'message': role.name}), status=201, mimetype='application/json')
+    except Exception as e:
+        return {'message': str(e)}, 400
+
+
+#Get roles
+@blueprint.route('/api/allroles', methods=['GET'])
+@marshal_with(role_schemas)
+def get_all_roles():
+    try:
+        roles = Role.query.all()
+        return roles
+    except Exception as e:
+        return {'message': str(e)}, 400
+    
 
 
 #Create login route with jwt token
