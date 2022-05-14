@@ -22,14 +22,14 @@ from mentor.middleware import check_token
 blueprint = Blueprint('account', __name__)
 bcrypt = Bcrypt()
 
-@blueprint.route('/api/account/', methods=['GET'])
-@check_token
-@marshal_with(account_schema)
-def get_account_by_token():
-    account = request.account
-    account.verification_stage = get_account_verification_stage(account)
-    # logging.info('Response: {}'.format(account.__dict__) )
-    return account
+# @blueprint.route('/api/account/', methods=['GET'])
+# @check_token
+# @marshal_with(account_schema)
+# def get_account_by_token():
+#     account = request.account
+#     account.verification_stage = get_account_verification_stage(account)
+#     # logging.info('Response: {}'.format(account.__dict__) )
+#     return account
 
 
 @blueprint.route('/api/accounts/<int:account_id>', methods=['GET'])
@@ -53,32 +53,32 @@ def get_accounts(search, limit=20, offset=0):
     return Account.query.offset(offset).limit(limit).all()
 
 
-@blueprint.route('/api/account', methods=['PUT'])
-@check_token
-@use_kwargs(account_schema)
-@marshal_with(account_schema)
-def update_account(**kwargs):
-    account = request.account
-    kwargs.pop('email', None)
-    # kwargs.pop('email', None)
-    kwargs.pop('created_at', None)
-    # todo fix updated_at on updates
-    kwargs.pop('updated_at', None)
-    # send welcome email to new account
-    if not account.first_name:
-        email_data = {
-            "transactional_message_id": 15,
-            "to": account.email,
-            "identifiers": {"id": account.id},
-            "message_data": {
-                "fname": kwargs.get('first_name', 'Buddy')
-            }
-        }
-        send_mail(email_data)
-    account.update(**kwargs)
-    account.verification_stage = get_account_verification_stage(account)
+# @blueprint.route('/api/account', methods=['PUT'])
+# @check_token
+# @use_kwargs(account_schema)
+# @marshal_with(account_schema)
+# def update_account(**kwargs):
+#     account = request.account
+#     kwargs.pop('email', None)
+#     # kwargs.pop('email', None)
+#     kwargs.pop('created_at', None)
+#     # todo fix updated_at on updates
+#     kwargs.pop('updated_at', None)
+#     # send welcome email to new account
+#     if not account.first_name:
+#         email_data = {
+#             "transactional_message_id": 15,
+#             "to": account.email,
+#             "identifiers": {"id": account.id},
+#             "message_data": {
+#                 "fname": kwargs.get('first_name', 'Buddy')
+#             }
+#         }
+#         send_mail(email_data)
+#     account.update(**kwargs)
+#     account.verification_stage = get_account_verification_stage(account)
 
-    return account
+#     return account
 
 
 # For Development purposes. Api route to sign up a new user
@@ -182,14 +182,14 @@ def login(email, password):
         return {'message': str(e)}, 400
 
 
-# For Development purposes. Api route to get a new token for a valid user
-@blueprint.route('/api/account/token', methods=['POST'])
-@use_kwargs({'email': fields.Str(), 'password': fields.Str()})
-def token(email, password):
-    try:
-        user = pb.auth().sign_in_with_email_and_password(email, password)
-        jwt = user['idToken']
-        # logging.info('Request:{} \n\n Response: {}'.format(user, jwt) )
-        return {'token': jwt}, 200
-    except:
-        return {'message': 'There was an error logging in'}, 400
+# # For Development purposes. Api route to get a new token for a valid user
+# @blueprint.route('/api/account/token', methods=['POST'])
+# @use_kwargs({'email': fields.Str(), 'password': fields.Str()})
+# def token(email, password):
+#     try:
+#         user = pb.auth().sign_in_with_email_and_password(email, password)
+#         jwt = user['idToken']
+#         # logging.info('Request:{} \n\n Response: {}'.format(user, jwt) )
+#         return {'token': jwt}, 200
+#     except:
+#         return {'message': 'There was an error logging in'}, 400
