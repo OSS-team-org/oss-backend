@@ -11,6 +11,7 @@ from marshmallow import fields
 from sqlalchemy import or_
 import datetime
 import jwt
+from flask_bcrypt import Bcrypt
 from .models import Account, Role, UserRoles
 
 from .serializers import account_schema, account_schemas, role_schema, role_schemas
@@ -19,7 +20,7 @@ from mentor.middleware import check_token
 # from ..utils import get_account_verification_stage, send_mail
 
 blueprint = Blueprint('account', __name__)
-
+bcrypt = Bcrypt()
 
 @blueprint.route('/api/account/', methods=['GET'])
 @check_token
@@ -83,6 +84,7 @@ def update_account(**kwargs):
 # For Development purposes. Api route to sign up a new user
 @blueprint.route('/api/account/signup', methods=['POST'])
 @use_kwargs({'email': fields.Str()})
+@marshal_with(account_schema)
 def signup(email):
     
     try:
@@ -101,19 +103,41 @@ def signup(email):
 
 
 
+
 #complete verify email is code is correct
 @blueprint.route('/api/account/verify', methods=['POST'])
+@marshal_with(account_schema)
 @use_kwargs({'code': fields.Str()})
 def verify_email(code):
     account = Account.query.filter(Account.code == code).first()
     if account:
         account.kyc_level = "KYC_LEVEL_1"
         account.save()
-        return jsonify({"message": "Account verified successfully"})
-    else:
+        return account
+    elif not account:
         return jsonify({"error": "Account not found"})
+        # return jsonify({"message": account})
+    else:
+        return jsonify({"error": "Wrong Code"})
 
 
+
+#complete account profile information
+@blueprint.route('/api/account/complete-signup', methods=['POST'])
+@marshal_with(account_schema)
+@use_kwargs({'first_name': fields.Str(), 'last_name': fields.Str(),'role_id': fields.Int(), 'password': fields.Str(), 'account_id': fields.Int()})
+def complete_profile(first_name,last_name,role_id,password,account_id):
+    try:
+        account = Account.query.filter(Account.id == account_id).first()
+        pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+        #update account with new password
+        account.update(first_name=first_name, last_name=last_name, password=pw_hash, role_id=role_id)
+        account.kyc_level = "KYC_LEVEL_2"
+        # token = jwt.encode({'email': account.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=50)}, 'secret', algorithm='HS256')
+        return account
+        # return {"message": account, "token": token.decode('utf-8'), "status_code": 201}  
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 #Create roles
@@ -140,23 +164,20 @@ def get_all_roles():
     
 
 
-#Create login route with jwt token
+#Create login route with email and password
 @blueprint.route('/api/account/login', methods=['POST'])
 @use_kwargs({'email': fields.Str(), 'password': fields.Str()})
 def login(email, password):
-    
     try:
-        # logging.info('Request: Email: {} \n\n Response: {}'.format(email, password))
-        user = Account.query.filter(Account.email == email).first()
-        # if user is None:
-        #     return {'message': 'User not found'}, 400
-        # if not user.check_password(password):
-        #     return {'message': 'Invalid password'}, 400
-        
-        token = jwt.encode({'email': user.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
-                            'secret', algorithm='HS256')
-        return {'token': token.decode('UTF-8')}, 200
-        # return Response(json.dumps({'token': token.decode('UTF-8')}), status=200, mimetype='application/json')
+        account = Account.query.filter(Account.email == email).first()
+        if account:
+            if bcrypt.check_password_hash(account.password, password):
+                token = jwt.encode({'email': account.email, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=50)}, 'secret', algorithm='HS256')
+                return {"token": token.decode('utf-8'), "status_code": 200}
+            else:
+                return {"error": "Wrong Password"}
+        else:
+            return {"error": "Account not found"}
     except Exception as e:
         return {'message': str(e)}, 400
 

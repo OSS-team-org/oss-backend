@@ -18,6 +18,7 @@ class AccountSchema(Schema):
     createdAt = fields.DateTime(attribute='created_at', dump_only=True)
     updatedAt = fields.DateTime(attribute='updated_at')
     role = fields.Nested('RoleSchema', only=('id', 'name', 'description'), dump_only=True)
+    
 
     @pre_load
     def make_account(self, data, **kwargs):
@@ -71,5 +72,5 @@ class AccountprofileSchema(Schema):
     class Meta:
         strict = True
 
-account_schema = AccountprofileSchema()
-account_schemas = AccountprofileSchema(many=True)
+accountprofile_schema = AccountprofileSchema()
+accountprofile_schemas = AccountprofileSchema(many=True)
