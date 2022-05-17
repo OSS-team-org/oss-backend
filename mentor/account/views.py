@@ -3,9 +3,10 @@
 import logging
 import json
 import random
+import os
 #push
 # from firebase_admin import auth
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response, jsonify, redirect, url_for
 from flask_apispec import use_kwargs, marshal_with
 from marshmallow import fields
 from sqlalchemy import or_
@@ -18,6 +19,8 @@ from .serializers import account_schema, account_schemas, role_schema, role_sche
 # from ..firebase import pb
 from mentor.middleware import check_token
 # from ..utils import get_account_verification_stage, send_mail
+from flask_dance.contrib.github import make_github_blueprint, github
+# from flask_github import GitHub
 
 blueprint = Blueprint('account', __name__)
 bcrypt = Bcrypt()
@@ -193,3 +196,28 @@ def login(email, password):
 #         return {'token': jwt}, 200
 #     except:
 #         return {'message': 'There was an error logging in'}, 400
+
+
+# Github  Auth
+# github = GitHub()
+# app = Flask(__name__)
+secret_key = os.environ.get("TULIX_SECRET")  # Replace this with your own secret!
+gb_blueprint = make_github_blueprint(
+    client_id=os.environ.get("CLIENT_ID"),
+    client_secret=os.environ.get("CLIENT_SECRET"),
+)
+blueprint.register_blueprint(gb_blueprint, url_prefix="/github_login")
+
+@blueprint.route('/github_login', methods=['GET'])
+def github_login():
+    if not github.authorized:
+        return redirect(url_for('account.github.login'))
+    else:
+        user_data =github.get('/user')
+        if user_data.ok:
+            user_info = user_data.json()
+            return "You are @{login} on GitHub".format(login=user_info["login"])
+    return '<h1>Authorization failed</h1>'
+
+# RuntimeError: The session is unavailable because no secret key was set. Set the secret_key on the application
+# to something unique and secret.

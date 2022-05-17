@@ -36,3 +36,4 @@ Unidecode==1.1.2
 webargs==8.1.0
 Werkzeug==2.1.0
 zipp==3.7.0
+Flask-Dance==6.0.0
