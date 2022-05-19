@@ -3,9 +3,11 @@
 import logging
 import json
 import random
+import os
+import requests
 #push
 # from firebase_admin import auth
-from flask import Blueprint, request, Response, jsonify
+from flask import Blueprint, request, Response, jsonify, redirect, url_for
 from flask_apispec import use_kwargs, marshal_with
 from marshmallow import fields
 from sqlalchemy import or_
@@ -17,10 +19,18 @@ from .models import Account, Role, UserRoles
 from .serializers import account_schema, account_schemas, role_schema, role_schemas
 # from ..firebase import pb
 from mentor.middleware import check_token
+
+#import WebapplicationClient from oauth2client.oauth2
+from oauthlib.oauth2 import WebApplicationClient
+import requests
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = ("https://accounts.google.com/.well-known/openid-configuration")
 # from ..utils import get_account_verification_stage, send_mail
 
 blueprint = Blueprint('account', __name__)
 bcrypt = Bcrypt()
+client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 # @blueprint.route('/api/account/', methods=['GET'])
 # @check_token
@@ -182,6 +192,65 @@ def login(email, password):
         return {'message': str(e)}, 400
 
 
+#get google provider configurations
+@blueprint.route('/api/google-provider', methods=['GET'])
+def get_google_provider_cfg():
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
+
+
+@blueprint.route('/login', methods=['GET'])
+def google_login():
+    google_provider_cfg = get_google_provider_cfg()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    request_uri = client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=request.base_url + "/callback",
+        scope=["openid", "email", "profile"],
+    )
+
+    return {"request_uri" : request_uri }
+
+
+@blueprint.route("/google-login/callback")
+def google_callback():
+    google_provider_cfg = get_google_provider_cfg()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=request.args.get("code"),
+    )
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+    )
+
+    client.parse_request_body_response(json.dumps(token_response.json()))
+
+    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+    if userinfo_response.json().get("email_verified"):
+        # unique_id = userinfo_response.json()["sub"]
+        users_email = userinfo_response.json()["email"]
+        first_name = userinfo_response.json()["given_name"]
+        last_name = userinfo_response.json()["family_name"]
+        # picture = userinfo_response.json()["picture"]
+        # users_name = userinfo_response.json()["given_name"]
+    else:
+        return "User email not available or not verified by Google.", 400
+    print(userinfo_response.json())
+    account = Account.query.filter(Account.email == users_email).first()
+    if not account:
+        account = Account(email=users_email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_0", registered_through="Google", first_name=first_name, last_name=last_name)
+        account.save()
+        return redirect(url_for("account.complete_profile", role_id=2, password="", account_id=account.id))
+    else:
+        return redirect(url_for("account.login", email=users_email, password=""))
 # # For Development purposes. Api route to get a new token for a valid user
 # @blueprint.route('/api/account/token', methods=['POST'])
 # @use_kwargs({'email': fields.Str(), 'password': fields.Str()})
