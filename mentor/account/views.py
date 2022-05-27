@@ -7,7 +7,7 @@ import os
 import requests
 #push
 # from firebase_admin import auth
-from flask import Blueprint, request, Response, jsonify, redirect, url_for
+from flask import Blueprint, request, Response, jsonify, redirect, url_for, render_template, session
 from flask_apispec import use_kwargs, marshal_with
 from marshmallow import fields
 from sqlalchemy import or_
@@ -15,6 +15,7 @@ import datetime
 import jwt
 from flask_bcrypt import Bcrypt
 from .models import Account, Role, UserRoles
+from flask_github import GitHub
 
 from .serializers import account_schema, account_schemas, role_schema, role_schemas
 # from ..firebase import pb
@@ -23,14 +24,28 @@ from mentor.middleware import check_token
 #import WebapplicationClient from oauth2client.oauth2
 from oauthlib.oauth2 import WebApplicationClient
 import requests
+from flask_mail import Mail
+from flask_mail import Message
+
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = ("https://accounts.google.com/.well-known/openid-configuration")
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 # from ..utils import get_account_verification_stage, send_mail
 
 blueprint = Blueprint('account', __name__)
 bcrypt = Bcrypt()
+mail = Mail()
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
+from flask_dance.contrib.github import make_github_blueprint, github
+from flask_dance.consumer import oauth_authorized
+
+github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_secret = GOOGLE_CLIENT_SECRET)
+
+
 
 # @blueprint.route('/api/account/', methods=['GET'])
 # @check_token
@@ -102,12 +117,17 @@ def signup(email):
         account = Account.query.filter(Account.email == email).first()
         if not account:
             account = Account(email=email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_0", registered_through="Internal")
+            # send code with flask mail
+            msg = Message("Mentor Connect",
+                  sender=MAIL_USERNAME,
+                  recipients=[account.email]
+                  )
             account.save()
+            msg.body = "Hello, %s. This is your %s." % (account.first_name, account.code)
+            mail.send(msg)
             return jsonify({"message": "{} created successfully".format(account.email), "status_code": 201})
         else:
-            print("Account already exists")
             return jsonify({"error": "Account already exists"})
-        
     except Exception as e:
         return jsonify({"message": str(e)})
 
@@ -212,7 +232,7 @@ def google_login():
     return {"request_uri" : request_uri }
 
 
-@blueprint.route("/google-login/callback")
+@blueprint.route("/login/callback")
 def google_callback():
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
@@ -246,7 +266,7 @@ def google_callback():
     print(userinfo_response.json())
     account = Account.query.filter(Account.email == users_email).first()
     if not account:
-        account = Account(email=users_email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_0", registered_through="Google", first_name=first_name, last_name=last_name)
+        account = Account(email=users_email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Google", first_name=first_name, last_name=last_name)
         account.save()
         return redirect(url_for("account.complete_profile", role_id=2, password="", account_id=account.id))
     else:
@@ -262,3 +282,53 @@ def google_callback():
 #         return {'token': jwt}, 200
 #     except:
 #         return {'message': 'There was an error logging in'}, 400
+
+
+# @blueprint.route('/github_login/github/authorized', methods=['GET'])
+# def authorized():
+#     if request.args.get('code'):
+#         # If there is a code, then it's a successful login
+#         code = request.args.get('code')
+#         # Get the access token
+#         access_token = github.get_access_token(code)
+#         # Get the user's information
+#         user = github.get('user', access_token=access_token)
+#         # Create a new account if it doesn't exist
+#         return {'message': 'Successfully logged in as {}'.format(user['login'])}
+#     else:
+#         return {'message': 'No code returned'}
+
+        
+
+@oauth_authorized.connect_via(github_blueprint)
+@blueprint.route('/githublogin')
+def github_login():
+    if not github.authorized:
+        return redirect(url_for('github.login'))
+    else:
+        account_info = github.get('/user') 
+        return {"user": account_info.json()}
+        # if account_info.ok:
+        #     if Account.query.filter(Account.email == account_info.json()['email']).first():
+        #         return {'message': 'Account already exists'}, 400
+        #     else:
+        #         account = Account(email=account_info.json()['email'], code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Github", first_name=account_info.json()['name'])
+        #         account.save()
+        #         return {'message': 'Successfully logged in as {}'.format(account_info.json()['login'])}
+
+    return '<h1>Request failed!</h1>'
+
+#logout of github account
+@blueprint.route('/githublogout', methods=['GET'])
+def githublogout():
+    token = github_blueprint
+    return {'token': token.__dict__}
+    
+    
+
+
+
+
+
+
+        
