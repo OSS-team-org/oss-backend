@@ -6,6 +6,10 @@ from flask_caching import Cache
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy, Model
+from flask_mail import Mail
+#import github-flask
+
+
 
 
 class CRUDMixin(Model):
@@ -41,6 +45,8 @@ db = SQLAlchemy(model_class=CRUDMixin)
 migrate = Migrate()
 cache = Cache()
 cors = CORS()
+mail = Mail()
+
 
 
 # jwt = JWTManager()
