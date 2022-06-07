@@ -15,7 +15,7 @@ add the following to ``.bashrc`` or ``.bash_profile``.
 
 .. code-block:: bash
 
-        export TULIX_SECRET='something-really-secret'
+        export MENTOR_SECRET='something-really-secret'
 
 Before running shell commands, set the ``FLASK_APP`` and ``FLASK_DEBUG`` 
 environment variables ::
