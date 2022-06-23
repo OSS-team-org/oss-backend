@@ -4,7 +4,6 @@ from email.policy import default
 from marshmallow import Schema, fields, pre_load, post_dump
 
 
-
 class AccountSchema(Schema):
     id = fields.Integer()
     email = fields.Email(default=None)
@@ -15,10 +14,11 @@ class AccountSchema(Schema):
     code = fields.String(default=None)
     first_name = fields.Str()
     last_name = fields.Str()
-    createdAt = fields.DateTime(attribute='created_at', dump_only=True)
-    updatedAt = fields.DateTime(attribute='updated_at')
-    role = fields.Nested('RoleSchema', only=('id', 'name', 'description'), dump_only=True)
-    
+    createdAt = fields.DateTime(attribute="created_at", dump_only=True)
+    updatedAt = fields.DateTime(attribute="updated_at")
+    role = fields.Nested(
+        "RoleSchema", only=("id", "name", "description"), dump_only=True
+    )
 
     @pre_load
     def make_account(self, data, **kwargs):
@@ -34,6 +34,7 @@ class AccountSchema(Schema):
 
 account_schema = AccountSchema()
 account_schemas = AccountSchema(many=True)
+
 
 class RoleSchema(Schema):
     id = fields.Integer()
@@ -51,6 +52,7 @@ class RoleSchema(Schema):
     class Meta:
         strict = True
 
+
 role_schema = RoleSchema()
 role_schemas = RoleSchema(many=True)
 
@@ -60,6 +62,8 @@ class AccountprofileSchema(Schema):
     profile_picture = fields.String()
     bio = fields.String()
     date_of_birth = fields.Date()
+    country = fields.String()
+    language = fields.String()
 
     @pre_load
     def make_userprofile(self, data, **kwargs):
@@ -71,6 +75,7 @@ class AccountprofileSchema(Schema):
 
     class Meta:
         strict = True
+
 
 accountprofile_schema = AccountprofileSchema()
 accountprofile_schemas = AccountprofileSchema(many=True)
