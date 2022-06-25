@@ -33,22 +33,6 @@ class Account(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return '<Account({email!r})>'.format(email=self.email)
 
-    def serialize(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'password': self.password,
-            'kyc_level': self.kyc_level,
-            'role_id': self.role_id,
-            'registered_through': self.registered_through,
-            'code': self.code,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'createdAt': self.created_at,
-            'updatedAt': self.updated_at,
-
-        }
-
     def get_account(self):
         return self.first_name
 

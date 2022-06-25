@@ -10,7 +10,7 @@ import requests
 from flask import Blueprint, request, Response, jsonify, redirect, url_for, render_template, session
 from flask_apispec import use_kwargs, marshal_with
 from marshmallow import fields
-from sqlalchemy import or_
+from sqlalchemy import null, or_
 import datetime
 import jwt
 from flask_bcrypt import Bcrypt
@@ -42,9 +42,44 @@ mail = Mail()
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 from flask_dance.contrib.github import make_github_blueprint, github
 from flask_dance.consumer import oauth_authorized
+from flask_restplus import Namespace, Resource, fields
+
 
 github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_secret = GOOGLE_CLIENT_SECRET)
+namespace = Namespace('account', description='Account related operations')
 
+Account_model = namespace.model('Account', {
+    'id': fields.Integer(required=True, description='The account unique identifier'),
+    'email': fields.String(required=True, description='The account email address'),
+    'first_name': fields.String(required=True, description='The account first name'),
+    'last_name': fields.String(required=True, description='The account last name'),
+    'password': fields.String(required=True, description='The account password'),
+    'role': fields.String(required=True, description='The account role'),
+    'kyc_level': fields.Integer(required=True, description='The account kyc level'),
+    'account_profile': fields.String(required=True, description='The foreignkey account profile'),
+    'code': fields.String(required=True, description='The verification code'),
+    'registered_through': fields.String(required=True, description='The account registered through'),
+    'created_at': fields.DateTime(required=True, description='The account creation time'),
+    'updated_at': fields.DateTime(required=True, description='The account last update time')
+})
+
+Role_model = namespace.model('Role', {
+    'id': fields.Integer(required=True, description='The role unique identifier'),
+    'name': fields.String(required=True, description='The role name'),
+    'description': fields.String(required=True, description='The role description'),
+    'created_at': fields.DateTime(required=True, description='The role creation time'),
+    'updated_at': fields.DateTime(required=True, description='The role last update time')
+})
+
+UserRoles_model = namespace.model('UserRoles', {
+    'id': fields.Integer(required=True, description='The user role unique identifier'),
+    'account_id': fields.Integer(required=True, description='The user role account identifier'),
+    'role_id': fields.Integer(required=True, description='The user role role identifier'),
+    'created_at': fields.DateTime(required=True, description='The user role creation time'),
+    'updated_at': fields.DateTime(required=True, description='The user role last update time')
+})
+
+@namespace.route('/documentation')
 
 
 # @blueprint.route('/api/account/', methods=['GET'])
@@ -123,7 +158,7 @@ def signup(email):
                   recipients=[account.email]
                   )
             account.save()
-            msg.body = "Hello, %s. This is your %s." % (account.first_name, account.code)
+            msg.body = "Please enter the code %s to verify your email address" % (account.code)
             mail.send(msg)
             return jsonify({"message": "{} created successfully".format(account.email), "status_code": 201})
         else:
@@ -271,6 +306,8 @@ def google_callback():
         return redirect(url_for("account.complete_profile", role_id=2, password="", account_id=account.id))
     else:
         return redirect(url_for("account.login", email=users_email, password=""))
+
+
 # # For Development purposes. Api route to get a new token for a valid user
 # @blueprint.route('/api/account/token', methods=['POST'])
 # @use_kwargs({'email': fields.Str(), 'password': fields.Str()})
@@ -307,22 +344,23 @@ def github_login():
         return redirect(url_for('github.login'))
     else:
         account_info = github.get('/user') 
-        return {"user": account_info.json()}
-        # if account_info.ok:
-        #     if Account.query.filter(Account.email == account_info.json()['email']).first():
-        #         return {'message': 'Account already exists'}, 400
-        #     else:
-        #         account = Account(email=account_info.json()['email'], code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Github", first_name=account_info.json()['name'])
-        #         account.save()
-        #         return {'message': 'Successfully logged in as {}'.format(account_info.json()['login'])}
+        if account_info.ok:
+            if Account.query.filter(Account.email == account_info.json()['email']).first():
+                return {'message': 'Account already exists'}, 400
+            elif account_info.json()['email'] is null or account_info.json()['email'] is None:
+                return {'message': 'Email not available'}, 400
+            else:
+                account = Account(email=account_info.json()['email'], code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Github", first_name=account_info.json()['name'])
+                account.save()
+                return {'message': 'Successfully logged in as {}'.format(account_info.json()['login'])}
 
     return '<h1>Request failed!</h1>'
 
-#logout of github account
-@blueprint.route('/githublogout', methods=['GET'])
-def githublogout():
-    token = github_blueprint
-    return {'token': token.__dict__}
+
+
+
+    
+        
     
     
 
