@@ -10,7 +10,7 @@ from mentor.settings import ProdConfig
 from flask_mail import Mail
 from flask_dance.contrib.github import make_github_blueprint, github
 import os
-from flask_restplus import Api, Resource, fields
+# from flask_restplus import Api, Resource, fields
 
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
@@ -33,7 +33,6 @@ def create_app(config_object=ProdConfig):
     app.config['MAIL_PASSWORD'] = MAIL_PASSWORD
     app.config['MAIL_USE_TLS'] = False
     app.config['MAIL_USE_SSL'] = True
-    api = Api(app, version='1.0', title='Mentor/Mentee API', description='Mentor and Mentee API')
     register_extensions(app)
     register_blueprints(app)
     register_errorhandlers(app)
