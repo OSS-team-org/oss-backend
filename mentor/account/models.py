@@ -60,6 +60,8 @@ class Accountprofile(SurrogatePK, Model):
     __tablename__ = "account_profile"
 
     profile_picture = Column(db.Text())
+    #store multiple expertise in a list
+    expertise = Column(db.Text())
     bio = Column(db.Text())
     date_of_birth = Column(db.Date)
     gender = Column(db.Enum("male", "female", "other", name="varchar"))

@@ -64,6 +64,7 @@ class AccountprofileSchema(Schema):
     date_of_birth = fields.Date()
     country = fields.String()
     language = fields.String()
+    expertise = fields.String()
 
     @pre_load
     def make_userprofile(self, data, **kwargs):
