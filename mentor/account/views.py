@@ -42,44 +42,44 @@ mail = Mail()
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 from flask_dance.contrib.github import make_github_blueprint, github
 from flask_dance.consumer import oauth_authorized
-from flask_restplus import Namespace, Resource, fields
+# from flask_restplus import Namespace, Resource, fields
 
 
 github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_secret = GOOGLE_CLIENT_SECRET)
-namespace = Namespace('account', description='Account related operations')
+# namespace = Namespace('account', description='Account related operations')
 
-Account_model = namespace.model('Account', {
-    'id': fields.Integer(required=True, description='The account unique identifier'),
-    'email': fields.String(required=True, description='The account email address'),
-    'first_name': fields.String(required=True, description='The account first name'),
-    'last_name': fields.String(required=True, description='The account last name'),
-    'password': fields.String(required=True, description='The account password'),
-    'role': fields.String(required=True, description='The account role'),
-    'kyc_level': fields.Integer(required=True, description='The account kyc level'),
-    'account_profile': fields.String(required=True, description='The foreignkey account profile'),
-    'code': fields.String(required=True, description='The verification code'),
-    'registered_through': fields.String(required=True, description='The account registered through'),
-    'created_at': fields.DateTime(required=True, description='The account creation time'),
-    'updated_at': fields.DateTime(required=True, description='The account last update time')
-})
+# Account_model = namespace.model('Account', {
+#     'id': fields.Integer(required=True, description='The account unique identifier'),
+#     'email': fields.String(required=True, description='The account email address'),
+#     'first_name': fields.String(required=True, description='The account first name'),
+#     'last_name': fields.String(required=True, description='The account last name'),
+#     'password': fields.String(required=True, description='The account password'),
+#     'role': fields.String(required=True, description='The account role'),
+#     'kyc_level': fields.Integer(required=True, description='The account kyc level'),
+#     'account_profile': fields.String(required=True, description='The foreignkey account profile'),
+#     'code': fields.String(required=True, description='The verification code'),
+#     'registered_through': fields.String(required=True, description='The account registered through'),
+#     'created_at': fields.DateTime(required=True, description='The account creation time'),
+#     'updated_at': fields.DateTime(required=True, description='The account last update time')
+# })
 
-Role_model = namespace.model('Role', {
-    'id': fields.Integer(required=True, description='The role unique identifier'),
-    'name': fields.String(required=True, description='The role name'),
-    'description': fields.String(required=True, description='The role description'),
-    'created_at': fields.DateTime(required=True, description='The role creation time'),
-    'updated_at': fields.DateTime(required=True, description='The role last update time')
-})
+# Role_model = namespace.model('Role', {
+#     'id': fields.Integer(required=True, description='The role unique identifier'),
+#     'name': fields.String(required=True, description='The role name'),
+#     'description': fields.String(required=True, description='The role description'),
+#     'created_at': fields.DateTime(required=True, description='The role creation time'),
+#     'updated_at': fields.DateTime(required=True, description='The role last update time')
+# })
 
-UserRoles_model = namespace.model('UserRoles', {
-    'id': fields.Integer(required=True, description='The user role unique identifier'),
-    'account_id': fields.Integer(required=True, description='The user role account identifier'),
-    'role_id': fields.Integer(required=True, description='The user role role identifier'),
-    'created_at': fields.DateTime(required=True, description='The user role creation time'),
-    'updated_at': fields.DateTime(required=True, description='The user role last update time')
-})
+# UserRoles_model = namespace.model('UserRoles', {
+#     'id': fields.Integer(required=True, description='The user role unique identifier'),
+#     'account_id': fields.Integer(required=True, description='The user role account identifier'),
+#     'role_id': fields.Integer(required=True, description='The user role role identifier'),
+#     'created_at': fields.DateTime(required=True, description='The user role creation time'),
+#     'updated_at': fields.DateTime(required=True, description='The user role last update time')
+# })
 
-@namespace.route('/documentation')
+# @namespace.route('/documentation')
 
 
 # @blueprint.route('/api/account/', methods=['GET'])
