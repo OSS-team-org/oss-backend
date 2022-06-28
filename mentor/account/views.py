@@ -4,9 +4,11 @@ import logging
 import json
 import random
 import os
+
+import requests
 #push
 # from firebase_admin import auth
-from flask import Blueprint, request, Response, jsonify, redirect, url_for
+from flask import Blueprint, request, Response, jsonify, redirect, url_for, render_template, session
 from flask_apispec import use_kwargs, marshal_with
 from marshmallow import fields
 from sqlalchemy import or_
@@ -14,16 +16,39 @@ import datetime
 import jwt
 from flask_bcrypt import Bcrypt
 from .models import Account, Role, UserRoles
+from flask_github import GitHub
 
 from .serializers import account_schema, account_schemas, role_schema, role_schemas
 # from ..firebase import pb
 from mentor.middleware import check_token
+
+#import WebapplicationClient from oauth2client.oauth2
+from oauthlib.oauth2 import WebApplicationClient
+import requests
+from flask_mail import Mail
+from flask_mail import Message
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_DISCOVERY_URL = ("https://accounts.google.com/.well-known/openid-configuration")
+GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 # from ..utils import get_account_verification_stage, send_mail
 from flask_dance.contrib.github import make_github_blueprint, github
 # from flask_github import GitHub
 
 blueprint = Blueprint('account', __name__)
 bcrypt = Bcrypt()
+mail = Mail()
+client = WebApplicationClient(GOOGLE_CLIENT_ID)
+from flask_dance.contrib.github import make_github_blueprint, github
+from flask_dance.consumer import oauth_authorized
+
+github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_secret = GOOGLE_CLIENT_SECRET)
+
+
 
 # @blueprint.route('/api/account/', methods=['GET'])
 # @check_token
@@ -95,12 +120,17 @@ def signup(email):
         account = Account.query.filter(Account.email == email).first()
         if not account:
             account = Account(email=email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_0", registered_through="Internal")
+            # send code with flask mail
+            msg = Message("Mentor Connect",
+                  sender=MAIL_USERNAME,
+                  recipients=[account.email]
+                  )
             account.save()
+            msg.body = "Hello, %s. This is your %s." % (account.first_name, account.code)
+            mail.send(msg)
             return jsonify({"message": "{} created successfully".format(account.email), "status_code": 201})
         else:
-            print("Account already exists")
             return jsonify({"error": "Account already exists"})
-        
     except Exception as e:
         return jsonify({"message": str(e)})
 
@@ -185,6 +215,65 @@ def login(email, password):
         return {'message': str(e)}, 400
 
 
+#get google provider configurations
+@blueprint.route('/api/google-provider', methods=['GET'])
+def get_google_provider_cfg():
+    return requests.get(GOOGLE_DISCOVERY_URL).json()
+
+
+@blueprint.route('/login', methods=['GET'])
+def google_login():
+    google_provider_cfg = get_google_provider_cfg()
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+
+    request_uri = client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri=request.base_url + "/callback",
+        scope=["openid", "email", "profile"],
+    )
+
+    return {"request_uri" : request_uri }
+
+
+@blueprint.route("/login/callback")
+def google_callback():
+    google_provider_cfg = get_google_provider_cfg()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+    token_url, headers, body = client.prepare_token_request(
+        token_endpoint,
+        authorization_response=request.url,
+        redirect_url=request.base_url,
+        code=request.args.get("code"),
+    )
+    token_response = requests.post(
+        token_url,
+        headers=headers,
+        data=body,
+        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+    )
+
+    client.parse_request_body_response(json.dumps(token_response.json()))
+
+    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+    uri, headers, body = client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+    if userinfo_response.json().get("email_verified"):
+        # unique_id = userinfo_response.json()["sub"]
+        users_email = userinfo_response.json()["email"]
+        first_name = userinfo_response.json()["given_name"]
+        last_name = userinfo_response.json()["family_name"]
+        # picture = userinfo_response.json()["picture"]
+        # users_name = userinfo_response.json()["given_name"]
+    else:
+        return "User email not available or not verified by Google.", 400
+    print(userinfo_response.json())
+    account = Account.query.filter(Account.email == users_email).first()
+    if not account:
+        account = Account(email=users_email, code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Google", first_name=first_name, last_name=last_name)
+        account.save()
+        return redirect(url_for("account.complete_profile", role_id=2, password="", account_id=account.id))
+    else:
+        return redirect(url_for("account.login", email=users_email, password=""))
 # # For Development purposes. Api route to get a new token for a valid user
 # @blueprint.route('/api/account/token', methods=['POST'])
 # @use_kwargs({'email': fields.Str(), 'password': fields.Str()})
@@ -198,26 +287,52 @@ def login(email, password):
 #         return {'message': 'There was an error logging in'}, 400
 
 
-# Github  Auth
-# github = GitHub()
-# app = Flask(__name__)
-secret_key = os.environ.get("TULIX_SECRET")  # Replace this with your own secret!
-gb_blueprint = make_github_blueprint(
-    client_id=os.environ.get("CLIENT_ID"),
-    client_secret=os.environ.get("CLIENT_SECRET"),
-)
-blueprint.register_blueprint(gb_blueprint, url_prefix="/github_login")
 
-@blueprint.route('/github_login', methods=['GET'])
+# @blueprint.route('/github_login/github/authorized', methods=['GET'])
+# def authorized():
+#     if request.args.get('code'):
+#         # If there is a code, then it's a successful login
+#         code = request.args.get('code')
+#         # Get the access token
+#         access_token = github.get_access_token(code)
+#         # Get the user's information
+#         user = github.get('user', access_token=access_token)
+#         # Create a new account if it doesn't exist
+#         return {'message': 'Successfully logged in as {}'.format(user['login'])}
+#     else:
+#         return {'message': 'No code returned'}
+
+        
+
+@oauth_authorized.connect_via(github_blueprint)
+@blueprint.route('/githublogin')
 def github_login():
     if not github.authorized:
-        return redirect(url_for('account.github.login'))
+        return redirect(url_for('github.login'))
     else:
-        user_data =github.get('/user')
-        if user_data.ok:
-            user_info = user_data.json()
-            return "You are @{login} on GitHub".format(login=user_info["login"])
-    return '<h1>Authorization failed</h1>'
+        account_info = github.get('/user') 
+        return {"user": account_info.json()}
+        # if account_info.ok:
+        #     if Account.query.filter(Account.email == account_info.json()['email']).first():
+        #         return {'message': 'Account already exists'}, 400
+        #     else:
+        #         account = Account(email=account_info.json()['email'], code=random.randint(1000, 9999), kyc_level="KYC_LEVEL_1", registered_through="Github", first_name=account_info.json()['name'])
+        #         account.save()
+        #         return {'message': 'Successfully logged in as {}'.format(account_info.json()['login'])}
 
-# RuntimeError: The session is unavailable because no secret key was set. Set the secret_key on the application
-# to something unique and secret.
+    return '<h1>Request failed!</h1>'
+
+#logout of github account
+@blueprint.route('/githublogout', methods=['GET'])
+def githublogout():
+    token = github_blueprint
+    return {'token': token.__dict__}
+    
+    
+
+
+
+
+
+
+
