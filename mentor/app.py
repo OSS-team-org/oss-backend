@@ -10,6 +10,7 @@ from mentor.settings import ProdConfig
 from flask_mail import Mail
 from flask_dance.contrib.github import make_github_blueprint, github
 import os
+# from flask_restplus import Api, Resource, fields
 
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
