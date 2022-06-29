@@ -6,7 +6,7 @@ from sqlalchemy import ForeignKey
 
 from mentor.database import Column, Model, SurrogatePK, db, relationship
 
-
+#account model
 class Account(SurrogatePK, Model):
     __tablename__ = "account"
 
@@ -179,7 +179,7 @@ class SocialMedia(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return "<SocialMedia({social_media_name!r})>".format(social_media_name=self.social_media_name)
 
-        
+
 class UserRoles(SurrogatePK, Model):
     __tablename__ = "user_roles"
 
