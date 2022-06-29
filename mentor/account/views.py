@@ -24,7 +24,7 @@ from sqlalchemy import null, or_
 import datetime
 import jwt
 from flask_bcrypt import Bcrypt
-from .models import Account, Role, UserRoles, Accountprofile
+from .models import Account, Role, UserRoles, Accountprofile, Expertise
 from flask_github import GitHub
 
 from .serializers import (
@@ -34,6 +34,8 @@ from .serializers import (
     role_schemas,
     accountprofile_schema,
     accountprofile_schemas,
+    expertise_schema,
+    expertise_schemas,
 )
 
 # from ..firebase import pb
@@ -285,30 +287,37 @@ def get_all_roles():
 @use_kwargs(
     {
         "profile_picture": fields.Str(),
-        "first_name": fields.Str(),
-        "last_name": fields.Str(),
+        "gender": fields.Str(),
+        "marital_status": fields.Str(),
         "country": fields.Str(),
         "language": fields.Str(),
         "bio": fields.Str(),
+        "education": fields.Str(),
+        "account_id": fields.Int(),
     }
 )
 def create_account_profile(
-    profile_picture, first_name, last_name, country, language, bio
+    profile_picture, country, language, bio, account_id, education, gender, marital_status
 ):
     try:
-        account_profile = Accountprofile.create(
+        account_profile = Accountprofile(
             profile_picture=profile_picture,
-            first_name=first_name,
-            last_name=last_name,
             country=country,
             language=language,
             bio=bio,
+            account_id=account_id,
+            education=education,
+            gender=gender,
+            marital_status=marital_status
         )
-        return Response(
-            json.dumps({"message": "Account profile created"}),
-            status=201,
-            mimetype="application/json",
-        )
+        account_profile.save()
+        print(account_profile)
+        return account_profile
+        # return Response(
+        #     json.dumps({"message": "Account profile created"}),
+        #     status=201,
+        #     mimetype="application/json",
+        # )
     except Exception as e:
         return {"message": str(e)}, 400
 
@@ -472,6 +481,25 @@ def github_login():
 
     return "<h1>Request failed!</h1>"
 
+
+#create expertise endpoint
+@blueprint.route("/api/expertise", methods=["POST"])
+@use_kwargs({
+    "name": fields.Str(required=True)
+})
+@marshal_with(expertise_schema)
+def create_expertise(name):
+    expertise = Expertise(name=name)
+    expertise.save()
+    return expertise, 201
+
+
+
+#Get all expertise
+@blueprint.route("/api/allexpertise", methods=["GET"])
+@marshal_with(expertise_schema)
+def get_all_expertise():
+    return Expertise.query.all()
 
 
 

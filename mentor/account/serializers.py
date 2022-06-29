@@ -61,10 +61,14 @@ class AccountprofileSchema(Schema):
     id = fields.Integer()
     profile_picture = fields.String()
     bio = fields.String()
-    date_of_birth = fields.Date()
     country = fields.String()
     language = fields.String()
-    expertise = fields.String()
+    marital_status = fields.String()
+    education = fields.String()
+    account_id = fields.Integer()
+    account = fields.Nested(
+        AccountSchema, dump_only=True
+    )
 
     @pre_load
     def make_userprofile(self, data, **kwargs):
@@ -77,6 +81,42 @@ class AccountprofileSchema(Schema):
     class Meta:
         strict = True
 
-
 accountprofile_schema = AccountprofileSchema()
 accountprofile_schemas = AccountprofileSchema(many=True)
+
+
+class ExpertiseSchema(Schema):
+    id = fields.Integer()
+    name = fields.String()
+
+    @pre_load
+    def make_expertise(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_expertise(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+expertise_schema = ExpertiseSchema()
+expertise_schemas = ExpertiseSchema(many=True)
+
+class AccountExpertiseSchema(Schema):
+    id = fields.Integer()
+    account_id = fields.Integer()
+    expertise_id = fields.Integer()
+
+    @pre_load
+    def make_account_expertise(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_account_expertise(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+
