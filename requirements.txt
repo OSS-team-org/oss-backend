@@ -64,3 +64,4 @@ URLObject==2.4.3
 webargs==8.1.0
 Werkzeug==2.0.3
 zipp==3.7.0
+Flask-Dance==6.0.0

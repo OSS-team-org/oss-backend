@@ -4,6 +4,7 @@ import logging
 import json
 import random
 import os
+
 import requests
 
 # push
@@ -55,6 +56,8 @@ GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 # from ..utils import get_account_verification_stage, send_mail
+from flask_dance.contrib.github import make_github_blueprint, github
+# from flask_github import GitHub
 
 blueprint = Blueprint("account", __name__)
 bcrypt = Bcrypt()
@@ -447,6 +450,7 @@ def google_callback():
 #         return {'message': 'There was an error logging in'}, 400
 
 
+
 # @blueprint.route('/github_login/github/authorized', methods=['GET'])
 # def authorized():
 #     if request.args.get('code'):
@@ -515,3 +519,4 @@ def get_all_expertise():
 
 
         
+
