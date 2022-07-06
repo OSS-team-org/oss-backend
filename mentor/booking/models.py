@@ -88,7 +88,7 @@ class TimeSlot(SurrogatePK, Model):
     start_time = Column(db.DateTime, nullable=False)
     duration = Column(db.Integer, nullable=False)
 # end_time auto calculated
-    # end_time = Column(db.DateTime, nullable=True)
+    end_time = Column(db.DateTime, nullable=True)
     is_booked = Column(db.Boolean, default=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
@@ -99,8 +99,8 @@ class TimeSlot(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        # return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + "-" + str(self.end_time) + ')'
-        return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + ')'
+        return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + "-" + str(self.end_time) + ')'
+        # return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + ')'
 
 
 class ServiceTag(SurrogatePK, Model):
