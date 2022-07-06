@@ -83,8 +83,8 @@ class TimeSlot(SurrogatePK, Model):
 
     mentor_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
     mentor = relationship('Account', back_populates='timeslots')
-# days: enum(Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)
-    # day = 
+    weekday_id = Column(db.Integer, ForeignKey('weekday.id'), nullable=False)
+    weekday = relationship('WeekDay', back_populates='timeslots')
     start_time = Column(db.DateTime, nullable=False)
     duration = Column(db.Integer, nullable=False)
 # end_time auto calculated
@@ -93,9 +93,9 @@ class TimeSlot(SurrogatePK, Model):
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
 
-    def __init__(self, mentor_id, start_time, duration, end_time, **kwargs):
+    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, mentor_id=mentor_id, start_time=start_time, duration=duration, end_time=end_time, **kwargs)
+        db.Model.__init__(self, mentor_id=mentor_id, weekday_id=weekday_id, start_time=start_time, duration=duration, end_time=end_time, **kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -118,3 +118,18 @@ class ServiceTag(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return '<ServiceTag %r>' % self.name
 
+
+class WeekDay(SurrogatePK, Model):
+    __tablename__ = 'weekday'
+
+    name = Column(db.String(100), nullable=False)
+    created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+
+    def __init__(self, name, **kwargs):
+        """Create instance"""
+        db.Model.__init__(self, name=name, **kwargs)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return '<WeekDay %r>' % self.name
