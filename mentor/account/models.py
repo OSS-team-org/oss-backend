@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Account models."""
 import datetime as dt
+from enum import Enum
+import enum
 
 from sqlalchemy import ForeignKey
 
@@ -22,6 +24,9 @@ class Account(SurrogatePK, Model):
         cascade="all, delete-orphan",
         lazy="select",
     )
+    work_experiences = relationship("Account_Workexperience", back_populates="account")
+    educations = relationship("Account_Education", back_populates="edu_account")
+    social_media = relationship("Account_SocialMedia", back_populates="soc_account")
     role = relationship("Role", backref="accounts")
     email = db.Column(db.String(100), unique=True, nullable=False)
     registered_through = Column(db.String(100), nullable=True)
@@ -66,6 +71,7 @@ class Accountprofile(SurrogatePK, Model):
     marital_status = Column(db.String(100), nullable=True)
     date_of_birth = Column(db.Date, nullable=True)
     education = Column(db.String(100), nullable=True)
+    gender = Column(db.String)
     country = Column(db.Text())
     language = Column(db.Text())
     account_id = Column(
@@ -94,14 +100,7 @@ class WorkExperience(SurrogatePK, Model):
     start_date = Column(db.Date, nullable=True)
     end_date = Column(db.Date, nullable=True)
     description = Column(db.Text(), nullable=True)
-    account_id = Column(
-        db.Integer,
-        ForeignKey("account.id", ondelete="CASCADE"),
-        unique=True,
-    )
-    account = relationship(
-        "Account", back_populates="work_experience", single_parent=True
-    )
+    accounts = relationship("Account_Workexperience", back_populates="work_experience")
 
     def __init__(self, company_name, position, start_date, end_date, description, **kwargs):
         """Create instance."""
@@ -123,25 +122,19 @@ class WorkExperience(SurrogatePK, Model):
 class Education(SurrogatePK, Model):
     __tablename__ = "education"
 
-    insitution_name = Column(db.String(100), nullable=True)
+    institution_name = Column(db.String(100), nullable=True)
     course = Column(db.String(100), nullable=True)
     start_date = Column(db.Date, nullable=True)
     end_date = Column(db.Date, nullable=True)
     description = Column(db.Text(), nullable=True)
-    account_id = Column(
-        db.Integer,
-        ForeignKey("account.id", ondelete="CASCADE"),
-        unique=True,
-    )
-    account = relationship(
-        "Account", back_populates="education", single_parent=True
-    )
+    accounts = relationship("Account_Education", back_populates="education")
+    
 
-    def __init__(self, school_name, start_date, end_date, description, **kwargs):
+    def __init__(self, institution_name, start_date, end_date, description, **kwargs):
         """Create instance."""
         db.Model.__init__(
             self,
-            school_name=school_name,
+            institution_name=institution_name,
             start_date=start_date,
             end_date=end_date,
             description=description,
@@ -150,34 +143,27 @@ class Education(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return "<Education({school_name!r})>".format(school_name=self.school_name)
+        return "<Education({institution_name!r})>".format(institution_name=self.institution_name)
 
 class SocialMedia(SurrogatePK, Model):
     __tablename__ = "social_media"
 
-    social_media_name = Column(db.String(100), nullable=True)
+    social_media_type = Column(db.String(100), nullable=True)
     social_media_link = Column(db.String(100), nullable=True)
-    account_id = Column(
-        db.Integer,
-        ForeignKey("account.id", ondelete="CASCADE"),
-        unique=True,
-    )
-    account = relationship(
-        "Account", back_populates="social_media", single_parent=True
-    )
+    accounts = relationship("Account_SocialMedia", back_populates="social_media")
 
-    def __init__(self, social_media_name, social_media_link, **kwargs):
+    def __init__(self, social_media_type, social_media_link, **kwargs):
         """Create instance."""
         db.Model.__init__(
             self,
-            social_media_name=social_media_name,
+            social_media_type=social_media_type,
             social_media_link=social_media_link,
             **kwargs
         )
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return "<SocialMedia({social_media_name!r})>".format(social_media_name=self.social_media_name)
+        return "<SocialMedia({social_media_type!r})>".format(social_media_type=self.social_media_type)
 
 
 class UserRoles(SurrogatePK, Model):
@@ -210,13 +196,96 @@ class Expertise(SurrogatePK, Model):
         """Create instance."""
         db.Model.__init__(self, name=name)
 
-    def __repr__(self):
+    def __repr__(self): 
         """Represent instance as a unique string."""
         return "<Expertise({name!r})>".format(name=self.name)
 
 
-account_expertise = db.Table(
-    "account_expertise",
-    db.Column("account_id", db.Integer, ForeignKey("account.id")),
-    db.Column("expertise_id", db.Integer, ForeignKey("expertise.id")),
-)
+class ExpertiseAccount(SurrogatePK, Model):
+    __tablename__ = "account_expertise"
+
+    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False)
+    expertise_id = Column(db.Integer, ForeignKey("expertise.id"), nullable=False)
+
+    account = relationship("Account", backref="account_expertise")
+    expertise = relationship("Expertise", backref="account_expertise")
+
+    def __init__(self, account_id, expertise_id):
+        """Create instance."""
+        db.Model.__init__(self, account_id=account_id, expertise_id=expertise_id)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return "<ExpertiseAccount({account_id!r}, {expertise_id!r})>".format(
+            account_id=self.account_id, expertise_id=self.expertise_id
+        )
+
+
+class Account_Workexperience(Model):
+    __tablename__ = "account_workexperience"
+
+    id = Column(db.Integer, primary_key=True, autoincrement=True)
+    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    work_experience_id = Column(db.Integer, ForeignKey("work_experience.id"), nullable=False, primary_key=True)
+
+    account = relationship("Account", backref="accounts")
+    work_experience = relationship("WorkExperience", backref="account_work_experiences")
+
+    def __init__(self, account_id, work_experience_id):
+        """Create instance."""
+        db.Model.__init__(self, account_id=account_id, work_experience_id=work_experience_id)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return "<Account_Workexperience({account_id!r}, {work_experience_id!r})>".format(
+            account_id=self.account_id, work_experience_id=self.work_experience_id
+        )
+
+#Association table for Education and Account
+class Account_Education(Model):
+    __tablename__ = "account_education"
+
+    id = Column(db.Integer, primary_key=True, autoincrement=True)
+    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    education_id = Column(db.Integer, ForeignKey("education.id"), nullable=False, primary_key=True)
+
+    edu_account = relationship("Account", back_populates="educations")
+    education = relationship("Education", back_populates="accounts")
+
+    def __init__(self, account_id, education_id):
+        """Create instance."""
+        db.Model.__init__(self, account_id=account_id, education_id=education_id)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return "<Account_Education({account_id!r}, {education_id!r})>".format(
+            account_id=self.account_id, education_id=self.education_id
+        )
+
+
+
+
+
+
+
+class Account_SocialMedia(Model):
+    __tablename__ = "account_socialmedia"
+
+    id = Column(db.Integer, primary_key=True, autoincrement=True)
+    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    social_media_id = Column(db.Integer, ForeignKey("social_media.id"), nullable=False, primary_key=True)
+
+    soc_account = relationship("Account", back_populates="social_media")
+    social_media = relationship("SocialMedia", back_populates="accounts")
+
+    def __init__(self, account_id, social_media_id):
+        """Create instance."""
+        db.Model.__init__(self, account_id=account_id, social_media_id=social_media_id)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return "<Account_SocialMedia({account_id!r}, {social_media_id!r})>".format(
+            account_id=self.account_id, social_media_id=self.social_media_id
+        )
+
+

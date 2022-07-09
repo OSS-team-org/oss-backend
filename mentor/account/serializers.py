@@ -1,6 +1,7 @@
 # coding: utf-8
 
 from email.policy import default
+from turtle import position
 from marshmallow import Schema, fields, pre_load, post_dump
 
 
@@ -19,6 +20,10 @@ class AccountSchema(Schema):
     role = fields.Nested(
         "RoleSchema", only=("id", "name", "description"), dump_only=True
     )
+    expertise = fields.Nested(
+        "ExpertiseSchema", many=True
+    )
+
 
     @pre_load
     def make_account(self, data, **kwargs):
@@ -62,12 +67,18 @@ class AccountprofileSchema(Schema):
     profile_picture = fields.String()
     bio = fields.String()
     country = fields.String()
+    date_of_birth = fields.Date()
+    gender = fields.String()
     language = fields.String()
     marital_status = fields.String()
     education = fields.String()
     account_id = fields.Integer()
     account = fields.Nested(
-        AccountSchema, dump_only=True
+        "AccountSchema",dump_only=True
+    )
+
+    account_expertise = fields.Nested(
+        "ExpertiseSchema", many=True
     )
 
     @pre_load
@@ -83,8 +94,6 @@ class AccountprofileSchema(Schema):
 
 accountprofile_schema = AccountprofileSchema()
 accountprofile_schemas = AccountprofileSchema(many=True)
-
-
 class ExpertiseSchema(Schema):
     id = fields.Integer()
     name = fields.String()
@@ -108,6 +117,13 @@ class AccountExpertiseSchema(Schema):
     account_id = fields.Integer()
     expertise_id = fields.Integer()
 
+    account_profile = fields.Nested(
+        "AccountSchema",dump_only=True
+    )
+    expertise_id = fields.Nested(
+        "ExpertiseSchema",dump_only=True
+    )
+
     @pre_load
     def make_account_expertise(self, data, **kwargs):
         return data
@@ -119,4 +135,154 @@ class AccountExpertiseSchema(Schema):
     class Meta:
         strict = True
 
+accountexpertise_schema = AccountExpertiseSchema()
+accountexpertise_schemas = AccountExpertiseSchema(many=True)
+
+class WorkExperienceSchema(Schema):
+    id = fields.Integer()
+    company_name = fields.String()
+    position = fields.String()
+    start_date = fields.Date()
+    end_date = fields.Date()
+    description = fields.String()
+
+    @pre_load
+    def make_workexperience(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_workexperience(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+workexperience_schema = WorkExperienceSchema()
+workexperience_schemas = WorkExperienceSchema(many=True)
+
+
+class EducationSchema(Schema):
+    id = fields.Integer()
+    institution_name = fields.String()
+    course = fields.String()
+    start_date = fields.Date()
+    end_date = fields.Date()
+    description = fields.String()
+
+    @pre_load
+    def make_education(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_education(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+education_schema = EducationSchema()
+education_schemas = EducationSchema(many=True)
+
+
+class SocialMediaSchema(Schema):
+    id = fields.Integer()
+    social_media_type = fields.String()
+    social_media_link = fields.String()
+
+    @pre_load
+    def make_socialmedia(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_socialmedia(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+socialmedia_schema = SocialMediaSchema()
+socialmedia_schemas = SocialMediaSchema(many=True)
+
+
+
+class AccountWorkExperienceSchema(Schema):
+    account_id = fields.Integer()
+    work_experience_id = fields.Integer()
+
+    account_profile = fields.Nested(
+        "AccountSchema",dump_only=True
+    )
+    work_experience = fields.Nested(
+        "WorkExperienceSchema",dump_only=True, many=True
+    )
+
+    @pre_load
+    def make_account_work_experience(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_account_work_experience(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+accountworkexperience_schema = AccountWorkExperienceSchema()
+accountworkexperience_schemas = AccountWorkExperienceSchema(many=True)
+
+
+class AccountEducationSchema(Schema):
+    id = fields.Integer()
+    account_id = fields.Integer()
+    education_id = fields.Integer()
+
+    account = fields.Nested(
+        "AccountSchema",dump_only=True
+    )
+    education = fields.Nested(
+        "EducationSchema",dump_only=True, many=True
+    )
+
+    @pre_load
+    def make_account_education(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_account_education(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+
+accounteducation_schema = AccountEducationSchema()
+accounteducation_schemas = AccountEducationSchema(many=True)
+
+
+class AccountSocialMediaSchema(Schema):
+    id = fields.Integer()
+    account_id = fields.Integer()
+    social_media_id = fields.Integer()
+
+    account = fields.Nested(
+        "AccountSchema",dump_only=True
+    )
+    social_media = fields.Nested(
+        "SocialMediaSchema",dump_only=True
+    )
+
+    @pre_load
+    def make_account_social_media(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_account_social_media(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+
+accountsocialmedia_schema = AccountSocialMediaSchema()
+accountsocialmedia_schemas = AccountSocialMediaSchema(many=True)
 

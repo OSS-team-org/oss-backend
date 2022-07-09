@@ -24,7 +24,7 @@ from sqlalchemy import null, or_
 import datetime
 import jwt
 from flask_bcrypt import Bcrypt
-from .models import Account, Role, UserRoles, Accountprofile, Expertise
+from .models import Account, Role, UserRoles, Accountprofile, Expertise, WorkExperience, Education, SocialMedia, ExpertiseAccount, Account_Workexperience, Account_Education, Account_SocialMedia, SocialMedia
 from flask_github import GitHub
 
 from .serializers import (
@@ -36,6 +36,14 @@ from .serializers import (
     accountprofile_schemas,
     expertise_schema,
     expertise_schemas,
+    accountexpertise_schema,
+    workexperience_schema,
+    workexperience_schemas,
+    education_schema,
+    education_schemas,
+    socialmedia_schema,
+    accountsocialmedia_schema,
+    accountsocialmedia_schemas
 )
 
 # from ..firebase import pb
@@ -287,17 +295,19 @@ def get_all_roles():
 @use_kwargs(
     {
         "profile_picture": fields.Str(),
-        "gender": fields.Str(),
-        "marital_status": fields.Str(),
         "country": fields.Str(),
         "language": fields.Str(),
         "bio": fields.Str(),
-        "education": fields.Str(),
         "account_id": fields.Int(),
+        "education": fields.Str(),
+        "gender": fields.Str(),
+        "marital_status": fields.Str(),
+        "date_of_birth": fields.Date(),
+        "expertise_id": fields.Int()
     }
 )
 def create_account_profile(
-    profile_picture, country, language, bio, account_id, education, gender, marital_status
+    profile_picture, country, language, bio, account_id, education, gender, marital_status, date_of_birth, expertise_id
 ):
     try:
         account_profile = Accountprofile(
@@ -308,18 +318,145 @@ def create_account_profile(
             account_id=account_id,
             education=education,
             gender=gender,
-            marital_status=marital_status
+            marital_status=marital_status,
+            date_of_birth=date_of_birth
         )
         account_profile.save()
-        print(account_profile)
+        account_expertise = ExpertiseAccount(
+            account_id = account_id,
+            expertise_id = expertise_id
+        )
+        account_expertise.save()
+        
         return account_profile
-        # return Response(
-        #     json.dumps({"message": "Account profile created"}),
-        #     status=201,
-        #     mimetype="application/json",
-        # )
     except Exception as e:
         return {"message": str(e)}, 400
+
+
+#Create account work experience
+@blueprint.route("/api/account-work-experience", methods=["POST"])
+@marshal_with(workexperience_schema)
+@use_kwargs(
+    {
+        "company_name": fields.Str(),
+        "position": fields.Str(),
+        "start_date": fields.Date(),
+        "end_date": fields.Date(),
+        "account_id": fields.Int(),
+        "description": fields.Str(),
+    }
+)
+def create_account_work_experience(
+    company_name,
+    position,
+    start_date,
+    end_date,
+    account_id,
+    description
+):
+    try:
+        work_experience = WorkExperience(
+            company_name=company_name,
+            position=position,
+            start_date=start_date,
+            end_date=end_date,
+            description=description
+        ) 
+        work_experience.save()
+
+        account_workexperience=Account_Workexperience(
+            account_id=account_id,
+            work_experience_id=work_experience.id
+        )
+
+        account_workexperience.save()
+        
+
+        
+        print(work_experience)
+        return work_experience
+    except Exception as e:
+        print(e)
+        return {"message": str(e)}, 400
+
+
+#Create account education
+@blueprint.route("/api/account-education", methods=["POST"])
+@marshal_with(education_schema)
+@use_kwargs(
+    {
+        "institution_name": fields.Str(),
+        "start_date": fields.Date(),
+        "end_date": fields.Date(),
+        "account_id": fields.Int(),
+        "description": fields.Str(),
+    }
+)
+def create_account_education(
+    institution_name,
+    start_date,
+    end_date,
+    account_id,
+    description
+):
+    try:
+        education = Education(
+            institution_name=institution_name,
+            start_date=start_date,
+            end_date=end_date,
+            description=description
+        ) 
+        education.save()
+
+        account_education=Account_Education(
+            account_id=account_id,
+            education_id=education.id
+        )
+
+        account_education.save()
+        
+
+        
+        print(education)
+        return education
+    except Exception as e:
+        print(e)
+        return {"message": str(e)}, 400
+
+
+#Create social media
+@blueprint.route("/api/account-social-media", methods=["POST"])
+@marshal_with(socialmedia_schema)
+@use_kwargs(
+    {
+        "social_media_type": fields.Str(),
+        "social_media_link": fields.Str(),
+        "account_id": fields.Int(),
+    }
+)
+def create_account_social_media(account_id, social_media_type, social_media_link):
+    try:
+        social_media = SocialMedia(
+            social_media_type=social_media_type,
+            social_media_link=social_media_link
+        ) 
+        social_media.save()
+
+        account_socialmedia=Account_SocialMedia(
+            account_id=account_id,
+            social_media_id=social_media.id
+        )
+
+        account_socialmedia.save()
+        
+
+        
+        print(social_media)
+        return social_media
+    except Exception as e:
+        print(e)
+        return {"message": str(e)}, 400
+
 
 
 # Get account profiles
