@@ -43,7 +43,10 @@ from .serializers import (
     education_schemas,
     socialmedia_schema,
     accountsocialmedia_schema,
-    accountsocialmedia_schemas
+    accountsocialmedia_schemas,
+    accountexpertise_schema,
+    accountexpertise_schemas,
+    AccountprofileSchema
 )
 
 # from ..firebase import pb
@@ -291,7 +294,7 @@ def get_all_roles():
 
 # Create account profile
 @blueprint.route("/api/account-profile", methods=["POST"])
-@marshal_with(accountprofile_schema)
+
 @use_kwargs(
     {
         "profile_picture": fields.Str(),
@@ -303,12 +306,13 @@ def get_all_roles():
         "gender": fields.Str(),
         "marital_status": fields.Str(),
         "date_of_birth": fields.Date(),
-        "expertise_id": fields.Int()
+        "expertise_ids": fields.List(fields.Int())
     }
 )
 def create_account_profile(
-    profile_picture, country, language, bio, account_id, education, gender, marital_status, date_of_birth, expertise_id
+    profile_picture, country, language, bio, account_id, education, gender, marital_status, date_of_birth, expertise_ids=None
 ):
+
     try:
         account_profile = Accountprofile(
             profile_picture=profile_picture,
@@ -322,27 +326,55 @@ def create_account_profile(
             date_of_birth=date_of_birth
         )
         account_profile.save()
-        account_expertise = ExpertiseAccount(
-            account_id = account_id,
-            expertise_id = expertise_id
-        )
-        account_expertise.save()
-        
-        return account_profile
+
+        #unpack expertise_ids array and store in ExpertiseAccount
+        for expertise_id in expertise_ids:
+            expertise_account = ExpertiseAccount(
+                account_id=account_profile.id,
+                expertise_id=expertise_id
+            )
+            expertise_account.save()
+            #return expertise and account_profile
+        # print(AccountprofileSchema().dump(Accountprofile.query.get(account_profile.id)))
+        #return account profile and expertise data
+        return AccountprofileSchema().dump(Accountprofile.query.get(account_profile.id))
     except Exception as e:
+        # print(str(e))
         return {"message": str(e)}, 400
+
+
+# @blueprint.route("/api/account-expertise", methods=["POST"])
+# @use_kwargs(
+#     {
+#         "account_id": fields.Int(),
+#         "expertise_ids": fields.List(fields.Int())
+#     }
+# )
+# @marshal_with(accountexpertise_schema)
+# def create_expertise_account(account_id, expertise_ids):
+#     try:
+#         for expertise_id in expertise_ids:
+#             expertise_account = ExpertiseAccount(
+#                 account_id=account_id,
+#                 expertise_id=expertise_id
+#             )
+#             expertise_account.save()
+            
+#     except Exception as e:
+#         print(str(e))
+#         return {"message": str(e)}, 400
 
 
 #Create account work experience
 @blueprint.route("/api/account-work-experience", methods=["POST"])
-@marshal_with(workexperience_schema)
+# @marshal_with(workexperience_schema)
 @use_kwargs(
     {
         "company_name": fields.Str(),
         "position": fields.Str(),
         "start_date": fields.Date(),
         "end_date": fields.Date(),
-        "account_id": fields.Int(),
+        "account_profileid": fields.Int(),
         "description": fields.Str(),
     }
 )
@@ -351,7 +383,7 @@ def create_account_work_experience(
     position,
     start_date,
     end_date,
-    account_id,
+    account_profileid,
     description
 ):
     try:
@@ -365,30 +397,28 @@ def create_account_work_experience(
         work_experience.save()
 
         account_workexperience=Account_Workexperience(
-            account_id=account_id,
+            account_id=account_profileid,
             work_experience_id=work_experience.id
         )
 
         account_workexperience.save()
         
-
-        
-        print(work_experience)
-        return work_experience
+        # print(AccountprofileSchema().dump(Accountprofile.query.get(account_profileid)))
+        return AccountprofileSchema().dump(Accountprofile.query.get(account_profileid))
     except Exception as e:
-        print(e)
+        # print(e)
         return {"message": str(e)}, 400
 
 
 #Create account education
 @blueprint.route("/api/account-education", methods=["POST"])
-@marshal_with(education_schema)
+# @marshal_with(education_schema)
 @use_kwargs(
     {
         "institution_name": fields.Str(),
         "start_date": fields.Date(),
         "end_date": fields.Date(),
-        "account_id": fields.Int(),
+        "account_profileid": fields.Int(),
         "description": fields.Str(),
     }
 )
@@ -396,7 +426,7 @@ def create_account_education(
     institution_name,
     start_date,
     end_date,
-    account_id,
+    account_profileid,
     description
 ):
     try:
@@ -409,7 +439,7 @@ def create_account_education(
         education.save()
 
         account_education=Account_Education(
-            account_id=account_id,
+            account_id=account_profileid,
             education_id=education.id
         )
 
@@ -417,24 +447,24 @@ def create_account_education(
         
 
         
-        print(education)
-        return education
+        # print(AccountprofileSchema().dump(Accountprofile.query.get(account_profileid)))
+        return AccountprofileSchema().dump(Accountprofile.query.get(account_profileid))
     except Exception as e:
-        print(e)
+        # print(e)
         return {"message": str(e)}, 400
 
 
 #Create social media
 @blueprint.route("/api/account-social-media", methods=["POST"])
-@marshal_with(socialmedia_schema)
+# @marshal_with(socialmedia_schema)
 @use_kwargs(
     {
         "social_media_type": fields.Str(),
         "social_media_link": fields.Str(),
-        "account_id": fields.Int(),
+        "account_profileid": fields.Int(),
     }
 )
-def create_account_social_media(account_id, social_media_type, social_media_link):
+def create_account_social_media(account_profileid, social_media_type, social_media_link):
     try:
         social_media = SocialMedia(
             social_media_type=social_media_type,
@@ -443,7 +473,7 @@ def create_account_social_media(account_id, social_media_type, social_media_link
         social_media.save()
 
         account_socialmedia=Account_SocialMedia(
-            account_id=account_id,
+            account_id=account_profileid,
             social_media_id=social_media.id
         )
 
@@ -451,10 +481,10 @@ def create_account_social_media(account_id, social_media_type, social_media_link
         
 
         
-        print(social_media)
-        return social_media
+        # print(AccountprofileSchema().dump(Accountprofile.query.get(account_profileid)))
+        return AccountprofileSchema().dump(Accountprofile.query.get(account_profileid))
     except Exception as e:
-        print(e)
+        # print(e)
         return {"message": str(e)}, 400
 
 
@@ -547,7 +577,7 @@ def google_callback():
         # users_name = userinfo_response.json()["given_name"]
     else:
         return "User email not available or not verified by Google.", 400
-    print(userinfo_response.json())
+    # print(userinfo_response.json())
     account = Account.query.filter(Account.email == users_email).first()
     if not account:
         account = Account(

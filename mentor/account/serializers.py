@@ -10,7 +10,7 @@ class AccountSchema(Schema):
     email = fields.Email(default=None)
     password = fields.String(default=None)
     kyc_level = fields.String(default="KYC_LEVEL_0")
-    role_id = fields.Integer(default=None)
+    # role_id = fields.Integer(default=None)
     registered_through = fields.String(default=None)
     code = fields.String(default=None)
     first_name = fields.Str()
@@ -21,8 +21,13 @@ class AccountSchema(Schema):
         "RoleSchema", only=("id", "name", "description"), dump_only=True
     )
     expertise = fields.Nested(
-        "ExpertiseSchema", many=True
+        "ExpertiseSchema", many=True, dump_only=True
     )
+
+    workexperience_schema = fields.Nested(
+        "WorkExperienceSchema", many=True, dump_only=True
+    )
+
 
 
     @pre_load
@@ -76,9 +81,17 @@ class AccountprofileSchema(Schema):
     account = fields.Nested(
         "AccountSchema",dump_only=True
     )
-
-    account_expertise = fields.Nested(
-        "ExpertiseSchema", many=True
+    expertises = fields.Nested(
+        "AccountExpertiseSchema", many=True
+    )
+    work_experiences = fields.Nested(
+        "AccountWorkExperienceSchema", many=True
+    )
+    educations = fields.Nested(
+        "AccountEducationSchema", many=True
+    )
+    social_medias = fields.Nested(
+        "AccountSocialMediaSchema", many=True
     )
 
     @pre_load
@@ -113,14 +126,7 @@ expertise_schema = ExpertiseSchema()
 expertise_schemas = ExpertiseSchema(many=True)
 
 class AccountExpertiseSchema(Schema):
-    id = fields.Integer()
-    account_id = fields.Integer()
-    expertise_id = fields.Integer()
-
-    account_profile = fields.Nested(
-        "AccountSchema",dump_only=True
-    )
-    expertise_id = fields.Nested(
+    expertise = fields.Nested(
         "ExpertiseSchema",dump_only=True
     )
 
@@ -159,6 +165,26 @@ class WorkExperienceSchema(Schema):
 
 workexperience_schema = WorkExperienceSchema()
 workexperience_schemas = WorkExperienceSchema(many=True)
+
+
+class AccountWorkExperienceSchema(Schema):
+    work_experience = fields.Nested(
+        "WorkExperienceSchema",dump_only=True
+    )
+
+    @pre_load
+    def make_account_work_experience(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_account_work_experience(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+accountworkexperience_schema = AccountWorkExperienceSchema()
+accountworkexperience_schemas = AccountWorkExperienceSchema(many=True)
 
 
 class EducationSchema(Schema):
@@ -205,42 +231,12 @@ socialmedia_schemas = SocialMediaSchema(many=True)
 
 
 
-class AccountWorkExperienceSchema(Schema):
-    account_id = fields.Integer()
-    work_experience_id = fields.Integer()
 
-    account_profile = fields.Nested(
-        "AccountSchema",dump_only=True
-    )
-    work_experience = fields.Nested(
-        "WorkExperienceSchema",dump_only=True, many=True
-    )
-
-    @pre_load
-    def make_account_work_experience(self, data, **kwargs):
-        return data
-
-    @post_dump
-    def dump_account_work_experience(self, data, **kwargs):
-        return data
-
-    class Meta:
-        strict = True
-
-accountworkexperience_schema = AccountWorkExperienceSchema()
-accountworkexperience_schemas = AccountWorkExperienceSchema(many=True)
 
 
 class AccountEducationSchema(Schema):
-    id = fields.Integer()
-    account_id = fields.Integer()
-    education_id = fields.Integer()
-
-    account = fields.Nested(
-        "AccountSchema",dump_only=True
-    )
     education = fields.Nested(
-        "EducationSchema",dump_only=True, many=True
+        "EducationSchema",dump_only=True
     )
 
     @pre_load
@@ -260,13 +256,6 @@ accounteducation_schemas = AccountEducationSchema(many=True)
 
 
 class AccountSocialMediaSchema(Schema):
-    id = fields.Integer()
-    account_id = fields.Integer()
-    social_media_id = fields.Integer()
-
-    account = fields.Nested(
-        "AccountSchema",dump_only=True
-    )
     social_media = fields.Nested(
         "SocialMediaSchema",dump_only=True
     )

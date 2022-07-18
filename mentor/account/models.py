@@ -16,7 +16,6 @@ class Account(SurrogatePK, Model):
     last_name = Column(db.String(100), nullable=True)
     kyc_level = Column(db.String(100), nullable=False)
     role_id = Column(db.Integer, ForeignKey("role.id"), nullable=True)
-    expertise = relationship("Expertise", secondary="account_expertise", backref="accounts")
     account_profile = relationship(
         "Accountprofile",
         uselist=False,
@@ -24,9 +23,8 @@ class Account(SurrogatePK, Model):
         cascade="all, delete-orphan",
         lazy="select",
     )
-    work_experiences = relationship("Account_Workexperience", back_populates="account")
-    educations = relationship("Account_Education", back_populates="edu_account")
-    social_media = relationship("Account_SocialMedia", back_populates="soc_account")
+    
+    
     role = relationship("Role", backref="accounts")
     email = db.Column(db.String(100), unique=True, nullable=False)
     registered_through = Column(db.String(100), nullable=True)
@@ -74,6 +72,10 @@ class Accountprofile(SurrogatePK, Model):
     gender = Column(db.String)
     country = Column(db.Text())
     language = Column(db.Text())
+    expertises = relationship("ExpertiseAccount", back_populates="account")
+    work_experiences = relationship("Account_Workexperience", back_populates="account")
+    educations = relationship("Account_Education", back_populates="account")
+    social_medias = relationship("Account_SocialMedia", back_populates="soc_account")
     account_id = Column(
         db.Integer,
         ForeignKey("account.id", ondelete="CASCADE"),
@@ -83,9 +85,9 @@ class Accountprofile(SurrogatePK, Model):
         "Account", back_populates="account_profile", single_parent=True
     )
 
-    def __init__(self, bio, **kwargs):
+    def __init__(self, **kwargs):
         """Create instance."""
-        db.Model.__init__(self, bio=bio, **kwargs)
+        db.Model.__init__(self,**kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -192,6 +194,8 @@ class Expertise(SurrogatePK, Model):
     __tablename__ = "expertise"
 
     name = Column(db.String(100), nullable=False)
+
+    accounts = relationship("ExpertiseAccount", back_populates="expertise")
     def __init__(self, name):
         """Create instance."""
         db.Model.__init__(self, name=name)
@@ -201,18 +205,19 @@ class Expertise(SurrogatePK, Model):
         return "<Expertise({name!r})>".format(name=self.name)
 
 
-class ExpertiseAccount(SurrogatePK, Model):
+class ExpertiseAccount(Model):
     __tablename__ = "account_expertise"
 
-    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False)
-    expertise_id = Column(db.Integer, ForeignKey("expertise.id"), nullable=False)
+    id = Column(db.Integer, primary_key=True, autoincrement=True)
+    account_id = Column(db.Integer, ForeignKey("account_profile.id"), nullable=False, primary_key=True)
+    expertise_id = Column(db.Integer, ForeignKey("expertise.id"), nullable=False, primary_key=True)
 
-    account = relationship("Account", backref="account_expertise")
-    expertise = relationship("Expertise", backref="account_expertise")
+    account = relationship("Accountprofile", back_populates="expertises")
+    expertise = relationship("Expertise", back_populates="accounts")
 
-    def __init__(self, account_id, expertise_id):
+    def __init__(self, **kwargs):
         """Create instance."""
-        db.Model.__init__(self, account_id=account_id, expertise_id=expertise_id)
+        db.Model.__init__(self, **kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -225,11 +230,11 @@ class Account_Workexperience(Model):
     __tablename__ = "account_workexperience"
 
     id = Column(db.Integer, primary_key=True, autoincrement=True)
-    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    account_id = Column(db.Integer, ForeignKey("account_profile.id"), nullable=False, primary_key=True)
     work_experience_id = Column(db.Integer, ForeignKey("work_experience.id"), nullable=False, primary_key=True)
 
-    account = relationship("Account", backref="accounts")
-    work_experience = relationship("WorkExperience", backref="account_work_experiences")
+    account = relationship("Accountprofile", back_populates="work_experiences")
+    work_experience = relationship("WorkExperience", back_populates="accounts")
 
     def __init__(self, account_id, work_experience_id):
         """Create instance."""
@@ -246,10 +251,10 @@ class Account_Education(Model):
     __tablename__ = "account_education"
 
     id = Column(db.Integer, primary_key=True, autoincrement=True)
-    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    account_id = Column(db.Integer, ForeignKey("account_profile.id"), nullable=False, primary_key=True)
     education_id = Column(db.Integer, ForeignKey("education.id"), nullable=False, primary_key=True)
 
-    edu_account = relationship("Account", back_populates="educations")
+    account = relationship("Accountprofile", back_populates="educations")
     education = relationship("Education", back_populates="accounts")
 
     def __init__(self, account_id, education_id):
@@ -272,10 +277,10 @@ class Account_SocialMedia(Model):
     __tablename__ = "account_socialmedia"
 
     id = Column(db.Integer, primary_key=True, autoincrement=True)
-    account_id = Column(db.Integer, ForeignKey("account.id"), nullable=False, primary_key=True)
+    account_id = Column(db.Integer, ForeignKey("account_profile.id"), nullable=False, primary_key=True)
     social_media_id = Column(db.Integer, ForeignKey("social_media.id"), nullable=False, primary_key=True)
 
-    soc_account = relationship("Account", back_populates="social_media")
+    soc_account = relationship("Accountprofile", back_populates="social_medias")
     social_media = relationship("SocialMedia", back_populates="accounts")
 
     def __init__(self, account_id, social_media_id):
