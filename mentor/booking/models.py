@@ -15,6 +15,7 @@ class Booking(SurrogatePK, Model):
     mentor_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
     mentor = relationship('Account', back_populates='bookings')
     start_time = Column(db.DateTime, nullable=False)
+    booked = Column(db.Boolean, default=False)
     end_time = Column(db.DateTime, nullable=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)

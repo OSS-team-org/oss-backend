@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Database module, including the SQLAlchemy database object and DB-related utilities."""
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, base
 
 from .compat import basestring
 from mentor.extensions import db
@@ -9,6 +9,7 @@ from mentor.extensions import db
 Column = db.Column
 relationship = relationship
 Model = db.Model
+
 
 # From Mike Bayer's "Building the app" talk
 # https://speakerdeck.com/zzzeek/building-the-app
