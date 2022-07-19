@@ -26,6 +26,7 @@ import jwt
 from flask_bcrypt import Bcrypt
 from .models import Account, Role, UserRoles, Accountprofile, Expertise, WorkExperience, Education, SocialMedia, ExpertiseAccount, Account_Workexperience, Account_Education, Account_SocialMedia, SocialMedia
 from flask_github import GitHub
+from flask_restx import Api, Resource
 
 from .serializers import (
     account_schema,
@@ -70,6 +71,7 @@ MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 blueprint = Blueprint("account", __name__)
 bcrypt = Bcrypt()
 mail = Mail()
+api = Api()
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 from flask_dance.contrib.github import make_github_blueprint, github
 from flask_dance.consumer import oauth_authorized
@@ -79,48 +81,10 @@ from flask_dance.consumer import oauth_authorized
 github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_secret = GOOGLE_CLIENT_SECRET)
 # namespace = Namespace('account', description='Account related operations')
 
-# Account_model = namespace.model('Account', {
-#     'id': fields.Integer(required=True, description='The account unique identifier'),
-#     'email': fields.String(required=True, description='The account email address'),
-#     'first_name': fields.String(required=True, description='The account first name'),
-#     'last_name': fields.String(required=True, description='The account last name'),
-#     'password': fields.String(required=True, description='The account password'),
-#     'role': fields.String(required=True, description='The account role'),
-#     'kyc_level': fields.Integer(required=True, description='The account kyc level'),
-#     'account_profile': fields.String(required=True, description='The foreignkey account profile'),
-#     'code': fields.String(required=True, description='The verification code'),
-#     'registered_through': fields.String(required=True, description='The account registered through'),
-#     'created_at': fields.DateTime(required=True, description='The account creation time'),
-#     'updated_at': fields.DateTime(required=True, description='The account last update time')
-# })
 
-# Role_model = namespace.model('Role', {
-#     'id': fields.Integer(required=True, description='The role unique identifier'),
-#     'name': fields.String(required=True, description='The role name'),
-#     'description': fields.String(required=True, description='The role description'),
-#     'created_at': fields.DateTime(required=True, description='The role creation time'),
-#     'updated_at': fields.DateTime(required=True, description='The role last update time')
-# })
-
-# UserRoles_model = namespace.model('UserRoles', {
-#     'id': fields.Integer(required=True, description='The user role unique identifier'),
-#     'account_id': fields.Integer(required=True, description='The user role account identifier'),
-#     'role_id': fields.Integer(required=True, description='The user role role identifier'),
-#     'created_at': fields.DateTime(required=True, description='The user role creation time'),
-#     'updated_at': fields.DateTime(required=True, description='The user role last update time')
-# })
-
-# @namespace.route('/documentation')
-
-
-# @blueprint.route('/api/account/', methods=['GET'])
-# @check_token
-# @marshal_with(account_schema)
-# def get_account_by_token():
-#     account = request.account
-#     account.verification_stage = get_account_verification_stage(account)
-#     # logging.info('Response: {}'.format(account.__dict__) )
-#     return account
+@api.route("/api/hello")
+def hello_world():
+    return "Hello World!"
 
 
 @blueprint.route("/api/accounts/<int:account_id>", methods=["GET"])
@@ -294,7 +258,7 @@ def get_all_roles():
 
 # Create account profile
 @blueprint.route("/api/account-profile", methods=["POST"])
-
+@check_token
 @use_kwargs(
     {
         "profile_picture": fields.Str(),
@@ -368,6 +332,7 @@ def create_account_profile(
 #Create account work experience
 @blueprint.route("/api/account-work-experience", methods=["POST"])
 # @marshal_with(workexperience_schema)
+@check_token
 @use_kwargs(
     {
         "company_name": fields.Str(),
@@ -413,6 +378,7 @@ def create_account_work_experience(
 #Create account education
 @blueprint.route("/api/account-education", methods=["POST"])
 # @marshal_with(education_schema)
+@check_token
 @use_kwargs(
     {
         "institution_name": fields.Str(),
@@ -457,6 +423,7 @@ def create_account_education(
 #Create social media
 @blueprint.route("/api/account-social-media", methods=["POST"])
 # @marshal_with(socialmedia_schema)
+@check_token
 @use_kwargs(
     {
         "social_media_type": fields.Str(),
@@ -492,6 +459,7 @@ def create_account_social_media(account_profileid, social_media_type, social_med
 # Get account profiles
 @blueprint.route("/api/allaccount_profiles", methods=["GET"])
 @marshal_with(accountprofile_schemas)
+@check_token
 def get_all_account_profiles():
     try:
         account_profiles = Accountprofile.query.all()
