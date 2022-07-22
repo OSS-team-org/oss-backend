@@ -82,7 +82,7 @@ github_blueprint = make_github_blueprint(client_id = GOOGLE_CLIENT_ID, client_se
 # namespace = Namespace('account', description='Account related operations')
 
 
-@api.route("/api/hello")
+@blueprint.route("/api/hello")
 def hello_world():
     return "Hello World!"
 
