@@ -1,35 +1,11 @@
 # -*- coding: utf-8 -*-
 """Booking models."""
 import datetime as dt
-from xmlrpc.client import DateTime
 
 from sqlalchemy import ForeignKey
 
 from mentor.database import Column, Model, SurrogatePK, db, relationship
 
-
-# class Booking(SurrogatePK, Model):
-#     __tablename__ = 'booking'
-
-#     mentee_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
-#     mentee = relationship('Account', back_populates='bookings')
-#     mentor_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
-#     mentor = relationship('Account', back_populates='bookings')
-#     start_time = Column(db.DateTime, nullable=False)
-#     end_time = Column(db.DateTime, nullable=False)
-#     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
-#     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
-
-#     def __init__(self, mentee_id, mentor_id, start_time, end_time, **kwargs):
-#         """Create instance."""
-#         db.Model.__init__(self, mentee_id=mentee_id, mentor_id=mentor_id, start_time=start_time, end_time=end_time, **kwargs)
-
-#     def __repr__(self):
-#         """Represent instance as a unique string."""
-#         return '<Booking({account_id!r})>'.format(mentee_id=self.mentee_id)
-
-#     def get_booking(self):
-#         return self.mentee_id
 
 """
 Booking Flow:
@@ -56,7 +32,7 @@ class Booking(SurrogatePK, Model):
     mentee_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
     mentee = relationship('Account', back_populates='bookings')
     slot_id = Column(db.Integer, ForeignKey('slot.id'), nullable=False)
-    slot = relationship('TimeSlot', backpopulates='bookings', order_by='TimeSlot.id')
+    slot = relationship('Slot', backpopulates='bookings', order_by='Slot.id')
     tag_id = Column(db.Integer, ForeignKey('servicetag.id'), nullable=True)
     # tags = relationship('ServiceTag', backpopulates='bookings', order_by='ServiceTag.id')
     tags = relationship(
@@ -78,13 +54,13 @@ class Booking(SurrogatePK, Model):
         return 'Booking(' + str(self.mentee_id) + ',' + str(self.slot_id) + ')'
 
 
-class TimeSlot(SurrogatePK, Model):
-    __tablename__ = 'timeslot'
+class Slot(SurrogatePK, Model):
+    __tablename__ = 'slot'
 
     mentor_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
-    mentor = relationship('Account', back_populates='timeslots')
+    mentor = relationship('Account', back_populates='slots')
     weekday_id = Column(db.Integer, ForeignKey('weekday.id'), nullable=False)
-    weekday = relationship('WeekDay', back_populates='timeslots')
+    weekday = relationship('WeekDay', back_populates='slots')
     start_time = Column(db.DateTime, nullable=False)
     duration = Column(db.Integer, nullable=False)
 # end_time auto calculated
@@ -99,8 +75,8 @@ class TimeSlot(SurrogatePK, Model):
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + "-" + str(self.end_time) + ')'
-        # return 'TimeSlot(' + str(self.mentor_id) + ',' + str(self.start_time) + ')'
+        return 'Slot(' + str(self.mentor_id) + ',' + str(self.start_time) + "-" + str(self.end_time) + ')'
+        # return 'Slot(' + str(self.mentor_id) + ',' + str(self.start_time) + ')'
 
 
 class ServiceTag(SurrogatePK, Model):
