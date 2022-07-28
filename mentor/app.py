@@ -10,6 +10,7 @@ from mentor.settings import ProdConfig
 from flask_mail import Mail
 from flask_dance.contrib.github import make_github_blueprint, github
 import os
+from werkzeug.utils import secure_filename
 # from flask_restplus import Api, Resource, fields
 
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
@@ -18,6 +19,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 MAIL_USERNAME = os.environ.get("MAIL_USERNAME")
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 mail = Mail()
+
+UPLOAD_FOLDER = '/images'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def create_app(config_object=ProdConfig):
     """An application factory, as explained here:
@@ -33,6 +37,7 @@ def create_app(config_object=ProdConfig):
     app.config['MAIL_PASSWORD'] = MAIL_PASSWORD
     app.config['MAIL_USE_TLS'] = False
     app.config['MAIL_USE_SSL'] = True
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     register_extensions(app)
     register_blueprints(app)
     register_errorhandlers(app)
