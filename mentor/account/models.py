@@ -270,9 +270,6 @@ class Account_Education(Model):
 
 
 
-
-
-
 class Account_SocialMedia(Model):
     __tablename__ = "account_socialmedia"
 
