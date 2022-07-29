@@ -91,8 +91,12 @@ def hello_world():
 @check_token
 @marshal_with(account_schema)
 def get_account_by_id(account_id):
-    logging.info("Request:{} \n\n Response: {}".format(account_id, Account.__dict__))
-    return Account.query.filter(Account.id == account_id).first()
+    try:
+        logging.info("Request:{} \n\n Response: {}".format(account_id, Account.__dict__))
+        return Account.query.filter(Account.id == account_id).first()
+    except Exception as e:
+        logging.error(e)
+        return {"message": "Error"}, 500
 
 
 @blueprint.route("/api/accounts", methods=["GET"])
@@ -239,7 +243,7 @@ def create_role(name):
     try:
         role = Role.create(name=name)
         return Response(
-            json.dumps({"message": role.name}), status=201, mimetype="application/json"
+            json.dumps({"response": role.name + " successfully created"}), status=201, mimetype="application/json"
         )
     except Exception as e:
         return {"message": str(e)}, 400
