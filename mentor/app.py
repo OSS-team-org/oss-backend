@@ -4,6 +4,7 @@ from flask import Flask
 
 from mentor import commands, account
 from mentor.account.views import blueprint as account_blueprint
+from mentor.booking.views import blueprint as booking_blueprint
 from mentor.exceptions import InvalidUsage
 from mentor.extensions import bcrypt, cache, db, migrate, cors
 from mentor.settings import ProdConfig
