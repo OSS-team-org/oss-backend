@@ -42,12 +42,14 @@ class Booking(SurrogatePK, Model):
         backref=db.backref('bookings', lazy=True)
     )
     description = Column(db.Text, nullable=True)
+    status = Column(db.String(50), nullable=False)
+    # is_confirmed = Column(db.Boolean, default=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
 
-    def __init__(self, mentee_id, slot, servicetag_id, **kwargs):
+    def __init__(self, mentee_id, slot, tag_id, description, status, is_confirmed, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, mentee_id=mentee_id, slot=slot, servicetag_id=servicetag_id, **kwargs)
+        db.Model.__init__(self, mentee_id=mentee_id, slot=slot, tag_id=tag_id, description=description, status=status, is_confirmed=is_confirmed, **kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -69,9 +71,9 @@ class Slot(SurrogatePK, Model):
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
 
-    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, **kwargs):
+    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, is_booked, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, mentor_id=mentor_id, weekday_id=weekday_id, start_time=start_time, duration=duration, end_time=end_time, **kwargs)
+        db.Model.__init__(self, mentor_id=mentor_id, weekday_id=weekday_id, start_time=start_time, duration=duration, end_time=end_time, is_booked=is_booked, **kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
