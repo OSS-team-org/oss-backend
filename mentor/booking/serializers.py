@@ -6,6 +6,8 @@ class BookingSchema(Schema):
     slot_id = fields.Integer(queryset=Slot.objects.filter(is_booked=False))
     tag_id = fields.Integer()
     description = fields.String()
+    status = fields.String(default="PENDING")
+    # is_confirmed = fields.Boolean()
     created_at = fields.DateTime(attribute="created_at", dump_only=True)
     updated_at = fields.DateTime(attribute="updated_at")
 
@@ -46,7 +48,7 @@ class SlotSchema(Schema):
         strict = True
 
 slot_schema = SlotSchema()
-slots_schema = SlotSchema(many=True)
+slot_schemas = SlotSchema(many=True)
 
 
 class WeekDaySchema(Schema):
@@ -66,7 +68,7 @@ class WeekDaySchema(Schema):
         strict = True
 
 weekday_schema = WeekDaySchema()
-weekdays_schema = WeekDaySchema(many=True)
+weekday_schemas = WeekDaySchema(many=True)
 
 
 class ServiceTagSchema(Schema):
@@ -86,4 +88,4 @@ class ServiceTagSchema(Schema):
         strict = True
 
 servicetag_schema = ServiceTagSchema()
-servicetags_schema = ServiceTagSchema(many=True)
+servicetag_schemas = ServiceTagSchema(many=True)
