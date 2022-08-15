@@ -2,7 +2,7 @@
 """The app module, containing the app factory function."""
 from flask import Flask
 
-from mentor import commands, account
+from mentor import commands, account, booking
 from mentor.account.views import blueprint as account_blueprint
 from mentor.booking.views import blueprint as booking_blueprint
 from mentor.exceptions import InvalidUsage
@@ -60,6 +60,7 @@ def register_blueprints(app):
     """Register Flask blueprints."""
     origins = app.config.get('CORS_ORIGIN_WHITELIST', '*')
     cors.init_app(account_blueprint, origins=origins)
+    cors.init_app(booking_blueprint, origins=origins)
     app.config["SECRET_KEY"]=SECRET_KEY 
 
     github_blueprint = make_github_blueprint(client_id=GITHUB_CLIENT_ID,
@@ -70,7 +71,7 @@ def register_blueprints(app):
     # cors.init_app(benefit.views.blueprint,origins=origins)
 
     app.register_blueprint(account_blueprint)
-    
+    app.register_blueprint(booking_blueprint)
 
 
 def register_errorhandlers(app):

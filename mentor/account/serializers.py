@@ -26,6 +26,8 @@ class AccountSchema(Schema):
     workexperience_schema = fields.Nested(
         "WorkExperienceSchema", many=True, dump_only=True
     )
+    # booking = fields.Nested("BookingSchema", dump_only=True)
+    # slot = fields.Nested("SlotSchema", dump_only=True)
 
 
 
