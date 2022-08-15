@@ -1,22 +1,24 @@
 from marshmallow import Schema, fields, pre_load, post_dump
 from mentor.booking.models import Slot
 
+
 class BookingSchema(Schema):
+    id = fields.Integer()
     mentee_id = fields.Integer()
-    slot_id = fields.Integer(queryset=Slot.objects.filter(is_booked=False))
-    tag_id = fields.Integer()
+    slot_id = fields.Integer(queryset=Slot.query.filter(is_booked=False))
+    tags = fields.Nested("TagSchema", many=True, dump_only=True)
     description = fields.String()
     status = fields.String(default="PENDING")
-    # is_confirmed = fields.Boolean()
+    is_confirmed = fields.Boolean()
     created_at = fields.DateTime(attribute="created_at", dump_only=True)
     updated_at = fields.DateTime(attribute="updated_at")
 
     @pre_load
-    def make_account(self, data, **kwargs):
+    def make_booking(self, data, **kwargs):
         return data
 
     @post_dump
-    def dump_account(self, data, **kwargs):
+    def dump_booking(self, data, **kwargs):
         return data
 
     class Meta:
@@ -27,6 +29,7 @@ booking_schemas = BookingSchema(many=True)
 
 
 class SlotSchema(Schema):
+    id = fields.Integer()
     mentor_id = fields.Integer()
     weekday_id = fields.Integer()
     start_time = fields.DateTime()
@@ -37,11 +40,11 @@ class SlotSchema(Schema):
     updated_at = fields.DateTime(attribute="updated_at")
 
     @pre_load
-    def make_account(self, data, **kwargs):
+    def make_slot(self, data, **kwargs):
         return data
 
     @post_dump
-    def dump_account(self, data, **kwargs):
+    def dump_slot(self, data, **kwargs):
         return data
 
     class Meta:
@@ -52,16 +55,17 @@ slot_schemas = SlotSchema(many=True)
 
 
 class WeekDaySchema(Schema):
+    id = fields.Integer()
     name = fields.String()
     created_at = fields.DateTime(attribute="created_at", dump_only=True)
     updated_at = fields.DateTime(attribute="updated_at")
 
     @pre_load
-    def make_account(self, data, **kwargs):
+    def make_weekday(self, data, **kwargs):
         return data
 
     @post_dump
-    def dump_account(self, data, **kwargs):
+    def dump_weekday(self, data, **kwargs):
         return data
 
     class Meta:
@@ -71,21 +75,40 @@ weekday_schema = WeekDaySchema()
 weekday_schemas = WeekDaySchema(many=True)
 
 
-class ServiceTagSchema(Schema):
+class TagSchema(Schema):
+    id = fields.Integer()
     name = fields.String()
     created_at = fields.DateTime(attribute="created_at", dump_only=True)
     updated_at = fields.DateTime(attribute="updated_at")
 
     @pre_load
-    def make_account(self, data, **kwargs):
+    def make_tag(self, data, **kwargs):
         return data
 
     @post_dump
-    def dump_account(self, data, **kwargs):
+    def dump_tag(self, data, **kwargs):
         return data
 
     class Meta:
         strict = True
 
-servicetag_schema = ServiceTagSchema()
-servicetag_schemas = ServiceTagSchema(many=True)
+tag_schema = TagSchema()
+tag_schemas = TagSchema(many=True)
+
+
+class TagAccountSchema(Schema):
+    tag = fields.Nested('TagSchema', dump_only=True)
+
+    @pre_load
+    def make_tag_account(self, data, **kwargs):
+        return data
+
+    @post_dump
+    def dump_tag_account(self, data, **kwargs):
+        return data
+
+    class Meta:
+        strict = True
+
+tagaccount_schema = TagSchema()
+tagaccount_schemas = TagSchema(many=True)

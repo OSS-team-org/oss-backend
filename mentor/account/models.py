@@ -32,6 +32,8 @@ class Account(SurrogatePK, Model):
     code = Column(db.String(100), nullable=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    # booking = relationship("Booking", back_populates="mentee")
+    # slot = relationship("Slot", back_populates="mentor")
 
     def __init__(self, email, **kwargs):
         """Create instance."""

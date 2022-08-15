@@ -21,35 +21,39 @@ Booking Flow:
 """
 
 
-tags = db.Table('servicetag',
-        db.Column('servicetag_id', db.Integer, ForeignKey('servicetag.id')),
-        db.Column('booking_id', db.Integer, ForeignKey('booking.id'))
-)
+# tags = db.Table('servicetag',
+#     db.Column('servicetag_id', db.Integer, ForeignKey('servicetag.id')),
+#     db.Column('booking_id', db.Integer, ForeignKey('booking.id'))
+# )
 
 class Booking(SurrogatePK, Model):
     __tablename__ = 'booking'
 
     mentee_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
-    mentee = relationship('Account', back_populates='bookings')
+    mentee = relationship('Account', back_populates='booking')
     slot_id = Column(db.Integer, ForeignKey('slot.id'), nullable=False)
-    slot = relationship('Slot', backpopulates='bookings', order_by='Slot.id')
-    tag_id = Column(db.Integer, ForeignKey('servicetag.id'), nullable=True)
-    # tags = relationship('ServiceTag', backpopulates='bookings', order_by='ServiceTag.id')
-    tags = relationship(
-        'ServiceTag',
-        secondary=tags,
-        lazy='subquery',
-        backref=db.backref('bookings', lazy=True)
-    )
+    slot = relationship('Slot', back_populates='booking')
+    tags = relationship('TagAccount', back_populates='booking')
     description = Column(db.Text, nullable=True)
     status = Column(db.String(50), nullable=False)
-    # is_confirmed = Column(db.Boolean, default=False)
+    is_confirmed = Column(db.Boolean, default=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
 
-    def __init__(self, mentee_id, slot, tag_id, description, status, is_confirmed, **kwargs):
+    def __init__(self, mentee_id, slot_id, tags, description, status, is_confirmed, created_at, updated_at, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, mentee_id=mentee_id, slot=slot, tag_id=tag_id, description=description, status=status, is_confirmed=is_confirmed, **kwargs)
+        db.Model.__init__(
+            self,
+            mentee_id=mentee_id,
+            slot_id=slot_id,
+            tags=tags,
+            description=description,
+            status=status,
+            is_confirmed=is_confirmed,
+            created_at=created_at,
+            updated_at=updated_at,
+            **kwargs
+        )
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -60,9 +64,9 @@ class Slot(SurrogatePK, Model):
     __tablename__ = 'slot'
 
     mentor_id = Column(db.Integer, ForeignKey('account.id'), nullable=False)
-    mentor = relationship('Account', back_populates='slots')
+    mentor = relationship('Account', back_populates='slot')
     weekday_id = Column(db.Integer, ForeignKey('weekday.id'), nullable=False)
-    weekday = relationship('WeekDay', back_populates='slots')
+    weekday = relationship('WeekDay', back_populates='slot')
     start_time = Column(db.DateTime, nullable=False)
     duration = Column(db.Integer, nullable=False)
 # end_time auto calculated
@@ -70,10 +74,22 @@ class Slot(SurrogatePK, Model):
     is_booked = Column(db.Boolean, default=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    booking = relationship('Booking', back_populates='slot')
 
-    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, is_booked, **kwargs):
+    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, is_booked, created_at, updated_at, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, mentor_id=mentor_id, weekday_id=weekday_id, start_time=start_time, duration=duration, end_time=end_time, is_booked=is_booked, **kwargs)
+        db.Model.__init__(
+            self,
+            mentor_id=mentor_id,
+            weekday_id=weekday_id,
+            start_time=start_time,
+            duration=duration,
+            end_time=end_time,
+            is_booked=is_booked,
+            created_at=created_at,
+            updated_at=updated_at,
+            **kwargs
+        )
 
     def __repr__(self):
         """Represent instance as a unique string."""
@@ -81,20 +97,41 @@ class Slot(SurrogatePK, Model):
         # return 'Slot(' + str(self.mentor_id) + ',' + str(self.start_time) + ')'
 
 
-class ServiceTag(SurrogatePK, Model):
-    __tablename__ = 'servicetag'
+class Tag(SurrogatePK, Model):
+    __tablename__ = 'tag'
 
     name = Column(db.String(100), nullable=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    bookings = relationship('TagAccount', back_populates='tag')
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, created_at, updated_at):
         """Create instance"""
-        db.Model.__init__(self, name=name, **kwargs)
+        db.Model.__init__(self, name=name, created_at=created_at, updated_at=updated_at)
 
     def __repr__(self):
         """Represent instance as a unique string."""
-        return '<ServiceTag %r>' % self.name
+        return '<Tag %r>' % self.name
+
+
+class TagAccount(SurrogatePK, Model):
+    __tablename__ = 'tag_account'
+
+    id = Column(db.Integer, primary_key=True, autoincrement=True)
+    booking_id = Column(db.Integer, ForeignKey('booking.id'), nullable=False, primary_key=True)
+    booking = relationship('Booking', back_populates='tags')
+    tag_id = Column(db.Integer, ForeignKey('tag.id'), nullable=False, primary_key=True)
+    tag = relationship('Tag', back_populates='bookings')
+
+    def __init__(self, **kwargs):
+        """Create instance."""
+        db.Model.__init__(self, **kwargs)
+
+    def __repr__(self):
+        """Represent instance as a unique string."""
+        return "<TagAccount({booking_id!r}, {tag_id!r})>".format(
+            booking_id=self.booking_id, tag_id=self.tag_id
+        )
 
 
 class WeekDay(SurrogatePK, Model):
@@ -103,10 +140,11 @@ class WeekDay(SurrogatePK, Model):
     name = Column(db.String(100), nullable=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
+    slot = relationship('Slot', back_populates='weekday')
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, created_at, updated_at, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, name=name, **kwargs)
+        db.Model.__init__(self, name=name, created_at=created_at, updated_at=updated_at,  **kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
