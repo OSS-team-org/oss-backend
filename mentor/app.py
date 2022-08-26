@@ -91,6 +91,7 @@ def register_shellcontext(app):
         return {
             'db': db,
             'Account': account.models.Account,
+            # 'Booking': booking.models.Booking,
         }
 
     app.shell_context_processor(shell_context)
