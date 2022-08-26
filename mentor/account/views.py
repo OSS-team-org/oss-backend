@@ -379,6 +379,18 @@ def create_account_work_experience(
         return {"message": str(e)}, 400
 
 
+#Delete account work experience
+@blueprint.route("/api/account-work-experience/<id>", methods=["DELETE"])
+@check_token
+def delete_account_work_experience(id):
+    try:
+        work_experience = WorkExperience.query.get(id)
+        work_experience.delete()
+        return {"message": "Work experience successfully deleted"}
+    except Exception as e:
+        return {"message": str(e)}, 400
+
+#creating a new branch
 #Create account education
 @blueprint.route("/api/account-education", methods=["POST"])
 # @marshal_with(education_schema)
