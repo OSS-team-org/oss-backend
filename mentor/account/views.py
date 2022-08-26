@@ -391,6 +391,7 @@ def delete_account_work_experience(id):
         return {"message": str(e)}, 400
 
 #creating a new branch
+#creating a new branch
 #Create account education
 @blueprint.route("/api/account-education", methods=["POST"])
 # @marshal_with(education_schema)
