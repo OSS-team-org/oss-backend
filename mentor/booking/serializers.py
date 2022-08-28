@@ -1,11 +1,11 @@
 from marshmallow import Schema, fields, pre_load, post_dump
-from mentor.booking.models import Slot
+
 
 
 class BookingSchema(Schema):
     id = fields.Integer()
     mentee_id = fields.Integer()
-    slot_id = fields.Integer(queryset=Slot.query.filter(is_booked=False))
+    slot_id = fields.Integer()
     tags = fields.Nested("TagSchema", many=True, dump_only=True)
     description = fields.String()
     status = fields.String(default="PENDING")
@@ -32,13 +32,16 @@ class SlotSchema(Schema):
     id = fields.Integer()
     mentor_id = fields.Integer()
     weekday_id = fields.Integer()
-    start_time = fields.DateTime()
+    start_time = fields.Time()
     duration = fields.Integer()
-    end_time = fields.DateTime()
+    end_time = fields.Time()
     is_booked = fields.Boolean()
-    created_at = fields.DateTime(attribute="created_at", dump_only=True)
-    updated_at = fields.DateTime(attribute="updated_at")
-
+    mentor = fields.Nested(
+        "AccountSchema",dump_only=True
+    )
+    weekday = fields.Nested(
+        "WeekDaySchema", dump_only=True
+    )
     @pre_load
     def make_slot(self, data, **kwargs):
         return data

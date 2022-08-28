@@ -33,7 +33,7 @@ class Booking(SurrogatePK, Model):
     mentee = relationship('Account', back_populates='booking')
     slot_id = Column(db.Integer, ForeignKey('slot.id'), nullable=False)
     slot = relationship('Slot', back_populates='booking')
-    tags = relationship('TagAccount', back_populates='booking')
+    tags = relationship('Booking_Tag', back_populates='booking')
     description = Column(db.Text, nullable=True)
     status = Column(db.String(50), nullable=False)
     is_confirmed = Column(db.Boolean, default=False)
@@ -67,16 +67,16 @@ class Slot(SurrogatePK, Model):
     mentor = relationship('Account', back_populates='slot')
     weekday_id = Column(db.Integer, ForeignKey('weekday.id'), nullable=False)
     weekday = relationship('WeekDay', back_populates='slot')
-    start_time = Column(db.DateTime, nullable=False)
+    start_time = Column(db.TIME, nullable=False)
     duration = Column(db.Integer, nullable=False)
 # end_time auto calculated
-    end_time = Column(db.DateTime, nullable=True)
+    end_time = Column(db.TIME, nullable=True)
     is_booked = Column(db.Boolean, default=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     booking = relationship('Booking', back_populates='slot')
 
-    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, is_booked, created_at, updated_at, **kwargs):
+    def __init__(self, mentor_id, weekday_id, start_time, duration, end_time, is_booked, **kwargs):
         """Create instance"""
         db.Model.__init__(
             self,
@@ -86,8 +86,6 @@ class Slot(SurrogatePK, Model):
             duration=duration,
             end_time=end_time,
             is_booked=is_booked,
-            created_at=created_at,
-            updated_at=updated_at,
             **kwargs
         )
 
@@ -103,7 +101,7 @@ class Tag(SurrogatePK, Model):
     name = Column(db.String(100), nullable=False)
     created_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
-    bookings = relationship('TagAccount', back_populates='tag')
+    bookings = relationship('Booking_Tag', back_populates='tag')
 
     def __init__(self, name, created_at, updated_at):
         """Create instance"""
@@ -113,9 +111,9 @@ class Tag(SurrogatePK, Model):
         """Represent instance as a unique string."""
         return '<Tag %r>' % self.name
 
-
-class TagAccount(SurrogatePK, Model):
-    __tablename__ = 'tag_account'
+#Pivot table for booking table and tag table
+class Booking_Tag(SurrogatePK, Model):
+    __tablename__ = 'booking_tag'
 
     id = Column(db.Integer, primary_key=True, autoincrement=True)
     booking_id = Column(db.Integer, ForeignKey('booking.id'), nullable=False, primary_key=True)
@@ -142,9 +140,9 @@ class WeekDay(SurrogatePK, Model):
     updated_at = Column(db.DateTime, nullable=False, default=dt.datetime.utcnow)
     slot = relationship('Slot', back_populates='weekday')
 
-    def __init__(self, name, created_at, updated_at, **kwargs):
+    def __init__(self, name, **kwargs):
         """Create instance"""
-        db.Model.__init__(self, name=name, created_at=created_at, updated_at=updated_at,  **kwargs)
+        db.Model.__init__(self, name=name,**kwargs)
 
     def __repr__(self):
         """Represent instance as a unique string."""
